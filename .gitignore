@@ -1,0 +1,60 @@
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/mcp.json
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+logs/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Node / React / Vite
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+frontend/coverage/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# .NET / ASP.NET Core
+**/bin/
+**/obj/
+**/TestResults/
+*.nupkg
+*.snupkg
+
+# User-specific files
+*.rsuser
+*.DotSettings.user
+
+# EF Core migrations bundles/artifacts (if generated)
+*.db
+*.sqlite
+
+# Build and temp
+artifacts/
+out/
+tmp/
+.temp/
+
+# Infra
+infra/.terraform/
+*.tfstate
+*.tfstate.*
