@@ -4,10 +4,7 @@ import { z } from "zod";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Label } from "@app/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/components/ui/card";
-import { Alert, AlertDescription } from "@app/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 
 // Zod validation schema
 const userSchema = z.object({
@@ -20,7 +17,7 @@ const userSchema = z.object({
 type UserFormData = z.infer<typeof userSchema>;
 
 export function UserFormExample() {
-  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<UserFormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
   });
 
@@ -31,8 +28,6 @@ export function UserFormExample() {
     alert("User would be created:\n" + JSON.stringify(data, null, 2));
     reset();
   };
-
-  const role = watch("role");
 
   return (
     <Card className="w-full max-w-md">
@@ -85,31 +80,21 @@ export function UserFormExample() {
           {/* Role Select */}
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={(value) => register("role").onChange({ target: { value } })}>
-              <SelectTrigger id="role">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Administrator</SelectItem>
-                <SelectItem value="finance">Finance Manager</SelectItem>
-                <SelectItem value="procurement">Procurement Manager</SelectItem>
-                <SelectItem value="user">Standard User</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              id="role"
+              {...register("role")}
+              className="w-full px-3 py-2 border border-input rounded-md bg-background"
+            >
+              <option value="">Select a role</option>
+              <option value="admin">Administrator</option>
+              <option value="finance">Finance Manager</option>
+              <option value="procurement">Procurement Manager</option>
+              <option value="user">Standard User</option>
+            </select>
             {errors.role && (
               <p className="text-xs text-red-600">{errors.role.message}</p>
             )}
           </div>
-
-          {/* Info Alert */}
-          {role === "admin" && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Admin users have full access to all modules and settings.
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Submit Button */}
           <Button type="submit" className="w-full">

@@ -80,14 +80,12 @@ function NavItem({ item, isActive }: NavItemProps) {
 
   return (
     <Collapsible defaultOpen={isActive}>
-      <CollapsibleTrigger className="w-full">
-        <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-          <div className="flex items-center gap-3">
-            <Icon className="h-5 w-5" />
-            <span>{item.label}</span>
-          </div>
-          <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
-        </button>
+      <CollapsibleTrigger className="w-full flex items-center justify-between px-3 py-2 rounded-lg font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer">
+        <div className="flex items-center gap-3">
+          <Icon className="h-5 w-5" />
+          <span>{item.label}</span>
+        </div>
+        <ChevronDown className="h-4 w-4 transition-transform" />
       </CollapsibleTrigger>
       <CollapsibleContent className="ml-4 mt-2 space-y-2">
         {item.submenu.map((subitem) => (
