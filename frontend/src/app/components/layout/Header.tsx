@@ -1,4 +1,4 @@
-import { Bell, Search, User, LogOut } from "lucide-react";
+import { Bell, Search, User, LogOut, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
@@ -6,6 +6,7 @@ import { Separator } from "@app/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -16,76 +17,81 @@ import { MobileSidebar } from "./Sidebar";
 
 export function Header() {
   const { auth, logout } = useAuth();
+  const initials = auth?.user.fullName
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <header className="bg-card border-b sticky top-0 z-40">
-      <div className="flex items-center justify-between px-6 py-4 gap-4">
-        {/* Left side - Mobile menu + Search */}
-        <div className="flex items-center gap-4 flex-1">
+    <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 md:px-6 h-16 gap-4">
+        {/* Left — Mobile menu + Search */}
+        <div className="flex items-center gap-3 flex-1">
           <MobileSidebar />
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
-            <Search className="h-5 w-5 text-muted-foreground" />
+          <div className="hidden md:flex items-center relative flex-1 max-w-sm">
+            <Search className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               type="text"
-              placeholder="Search..."
-              className="border-0 bg-accent focus:bg-white focus-visible:ring-0"
+              placeholder="Search anything..."
+              className="pl-9 h-9 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
             />
           </div>
         </div>
 
-        {/* Right side - Notifications + User Menu */}
-        <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
+        {/* Right — Notifications + User */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="relative h-9 w-9">
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full ring-2 ring-card" />
           </Button>
 
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="h-6 mx-1" />
 
           {/* User Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Button variant="ghost" className="gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                  {auth?.user.fullName?.charAt(0)}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium">{auth?.user.fullName}</p>
-                  <p className="text-xs text-muted-foreground">{auth?.user.email}</p>
-                </div>
-              </Button>
+            <DropdownMenuTrigger render={<Button variant="ghost" className="gap-2.5 h-9 px-2" />}>
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-chart-5 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                {initials}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium leading-none">{auth?.user.fullName}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{auth?.user.email}</p>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold">
-                    {auth?.user.fullName?.charAt(0)}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-chart-5 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{auth?.user.fullName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{auth?.user.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{auth?.user.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{auth?.user.email}</p>
-                  </div>
-                </div>
-              </DropdownMenuLabel>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link to="/profile" className="cursor-pointer flex items-center">
-                  <User className="h-4 w-4 mr-2" />
+                <Link to="/profile" className="flex items-center gap-2 w-full">
+                  <User className="h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                Settings
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-red-600 focus:text-red-700 focus:bg-red-50"
+                className="text-destructive focus:text-destructive"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

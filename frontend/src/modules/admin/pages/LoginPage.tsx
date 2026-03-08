@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
+import { Button } from "@app/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/components/ui/card";
+import { Input } from "@app/components/ui/input";
+import { Label } from "@app/components/ui/label";
 import { useAuth } from "@shared/auth/auth-context";
+import { AlertTriangle } from "lucide-react";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -27,39 +33,51 @@ export function LoginPage() {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card">
-        <h1>ERP Suite Login</h1>
-        <p>Sign in with your admin account to access the MVP dashboard.</p>
+    <main className="min-h-screen flex items-center justify-center bg-muted/40 px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>ERP Suite Login</CardTitle>
+          <CardDescription>Sign in with your admin account to access the MVP dashboard.</CardDescription>
+        </CardHeader>
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="username"
-            required
-          />
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="username"
+              placeholder="admin@erpsuite.local"
+              required
+            />
 
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            required
-          />
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              required
+            />
 
-          {error && <p className="error-message">{error}</p>}
+            {error && (
+              <Alert variant="destructive">
+                <AlertTriangle size={16} />
+                <AlertTitle>Sign in failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-      </section>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   );
 }
