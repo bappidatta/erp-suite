@@ -1,0 +1,33 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/" />
+  <Folder Name="/src/BuildingBlocks/Application/">
+    <Project Path="src/BuildingBlocks/Application/ErpSuite.BuildingBlocks.Application/ErpSuite.BuildingBlocks.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/Domain/">
+    <Project Path="src/BuildingBlocks/Domain/ErpSuite.BuildingBlocks.Domain/ErpSuite.BuildingBlocks.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/Infrastructure/">
+    <Project Path="src/BuildingBlocks/Infrastructure/ErpSuite.BuildingBlocks.Infrastructure/ErpSuite.BuildingBlocks.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/Presentation/">
+    <Project Path="src/BuildingBlocks/Presentation/ErpSuite.BuildingBlocks.Presentation/ErpSuite.BuildingBlocks.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/src/Host/">
+    <Project Path="src/Host/Api/Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Admin/" />
+  <Folder Name="/src/Modules/Admin/Application/">
+    <Project Path="src/Modules/Admin/Application/ErpSuite.Modules.Admin.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Admin/Domain/">
+    <Project Path="src/Modules/Admin/Domain/ErpSuite.Modules.Admin.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Admin/Infrastructure/">
+    <Project Path="src/Modules/Admin/Infrastructure/ErpSuite.Modules.Admin.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Admin/Presentation/">
+    <Project Path="src/Modules/Admin/Presentation/ErpSuite.Modules.Admin.Presentation.csproj" />
+  </Folder>
+</Solution>
