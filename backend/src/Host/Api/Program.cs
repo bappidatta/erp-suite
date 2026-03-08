@@ -46,6 +46,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi("v1");
 
 var app = builder.Build();
 
@@ -58,10 +59,7 @@ using (var scope = app.Services.CreateScope())
     await seeder.SeedAsync(CancellationToken.None);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.MapOpenApi("/openapi/{documentName}.json");
 
 app.MapGet("/", () => Results.Ok(new { service = "ERP Suite API", status = "healthy" }));
 
