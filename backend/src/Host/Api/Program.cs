@@ -63,6 +63,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapGet("/", () => Results.Ok(new { service = "ERP Suite API", status = "healthy" }));
+
 app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
