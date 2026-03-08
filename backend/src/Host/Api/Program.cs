@@ -1,23 +1,70 @@
+using System.Text;
+using ErpSuite.Modules.Admin.Infrastructure;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
+using ErpSuite.Modules.Admin.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ErpSuite";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ErpSuite.Client";
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "CHANGE_ME_WITH_MIN_32_CHARACTERS_SECRET";
 
 // Add DbContext
 builder.Services.AddDbContext<ErpDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddAdminInfrastructure();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ErpDbContext>();
+    await dbContext.Database.MigrateAsync();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<AdminDataSeeder>();
+    await seeder.SeedAsync(CancellationToken.None);
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+app.UseCors("frontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
