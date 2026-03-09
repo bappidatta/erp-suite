@@ -2,16 +2,15 @@ export interface AuthUser {
   id: number;
   email: string;
   fullName: string;
+  role: string;
 }
 
-export interface LoginResult {
-  accessToken: string;
+export interface AuthResponse {
   expiresAtUtc: string;
   user: AuthUser;
 }
 
 export interface AuthState {
-  token: string;
   user: AuthUser;
   expiresAtUtc: string;
 }

@@ -12,6 +12,8 @@ public class ErpDbContext : BaseDbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Company> Companies => Set<Company>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,9 +32,42 @@ public class ErpDbContext : BaseDbContext
             entity.Property(e => e.FirstName).HasColumnName("first_name").HasMaxLength(128).IsRequired();
             entity.Property(e => e.LastName).HasColumnName("last_name").HasMaxLength(128).IsRequired();
             entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.MustChangePassword).HasColumnName("must_change_password");
             entity.Property(e => e.LastLoginAt).HasColumnName("last_login_at");
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
 
             entity.HasIndex(e => e.Email).IsUnique();
+
+            entity.HasOne(e => e.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(e => e.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Configure Role entity
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("roles");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(256);
+
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+
+        // Configure RevokedToken entity
+        modelBuilder.Entity<RevokedToken>(entity =>
+        {
+            entity.ToTable("revoked_tokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Jti).HasColumnName("jti").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+
+            entity.HasIndex(e => e.Jti).IsUnique();
+            entity.HasIndex(e => e.ExpiresAt);
         });
 
         // Configure Company entity

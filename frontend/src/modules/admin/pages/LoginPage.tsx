@@ -11,8 +11,8 @@ import { AlertTriangle, Lock, Mail, ArrowRight, Shield } from "lucide-react";
 export function LoginPage() {
   const loginMutation = useLoginMutation();
 
-  const [email, setEmail] = useState("admin@erpsuite.local");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

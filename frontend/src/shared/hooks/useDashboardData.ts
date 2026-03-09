@@ -35,9 +35,9 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ["dashboard", "overview"],
     queryFn: async () => {
-      return apiFetch<DashboardData>("/api/v1/dashboard", {}, auth?.token);
+      return apiFetch<DashboardData>("/api/v1/dashboard");
     },
-    enabled: !!auth?.token,
+    enabled: !!auth,
     staleTime: 60_000, // Consider fresh for 1 minute
     refetchInterval: 300_000 // Auto-refetch every 5 minutes
   });

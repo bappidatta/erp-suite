@@ -9,11 +9,14 @@ public class User : BaseAuditableEntity
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;
     public bool IsActive { get; private set; } = true;
+    public bool MustChangePassword { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
+    public long RoleId { get; private set; }
+    public Role Role { get; private set; } = null!;
 
     private User() { } // EF Core
 
-    public static User Create(string email, string passwordHash, string firstName, string lastName)
+    public static User Create(string email, string passwordHash, string firstName, string lastName, long roleId, bool mustChangePassword = false)
     {
         return new User
         {
@@ -21,7 +24,9 @@ public class User : BaseAuditableEntity
             PasswordHash = passwordHash,
             FirstName = firstName,
             LastName = lastName,
-            IsActive = true
+            IsActive = true,
+            RoleId = roleId,
+            MustChangePassword = mustChangePassword
         };
     }
 
@@ -34,6 +39,7 @@ public class User : BaseAuditableEntity
     public void UpdatePassword(string newPasswordHash)
     {
         PasswordHash = newPasswordHash;
+        MustChangePassword = false;
     }
 
     public void Activate() => IsActive = true;

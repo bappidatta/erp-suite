@@ -10,22 +10,16 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
-  let headers: HeadersInit = {
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...(options.headers ?? {})
   };
 
-  if (token) {
-    headers = {
-      ...headers,
-      Authorization: `Bearer ${token}`
-    };
-  }
-
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    headers
+    headers,
+    credentials: "include"
   });
 
   if (!response.ok) {
@@ -44,6 +38,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}, token
     }
 
     throw new ApiError(response.status, message);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json() as Promise<T>;

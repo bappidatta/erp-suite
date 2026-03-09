@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { apiFetch } from "@shared/api/client";
-import type { AuthState, LoginResult } from "@shared/auth/types";
+import type { AuthResponse, AuthState, AuthUser } from "@shared/auth/types";
 
 interface AuthContextValue {
   auth: AuthState | null;
@@ -9,50 +9,54 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => void;
+  isRestoring: boolean;
 }
-
-const AUTH_STORAGE_KEY = "erp_auth_state";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function readStoredAuth(): AuthState | null {
-  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as AuthState;
-    if (!parsed.token || !parsed.user) {
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [auth, setAuth] = useState<AuthState | null>(() => readStoredAuth());
+  const [auth, setAuth] = useState<AuthState | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
   const isRefreshingRef = useRef(false);
 
-  function persistAuth(nextAuth: AuthState): void {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextAuth));
-    setAuth(nextAuth);
-  }
+  // On mount, try to restore session from httpOnly cookie via /me endpoint
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      try {
+        const user = await apiFetch<AuthUser>("/api/v1/auth/me");
+        if (!cancelled) {
+          // We don't know exact expiry from /me, so trigger a refresh to get fresh expiry
+          const result = await apiFetch<AuthResponse>("/api/v1/auth/refresh", {
+            method: "POST"
+          });
+          if (!cancelled) {
+            setAuth({ user: result.user, expiresAtUtc: result.expiresAtUtc });
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setAuth(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsRestoring(false);
+        }
+      }
+    }
+
+    void restoreSession();
+    return () => { cancelled = true; };
+  }, []);
 
   async function login(email: string, password: string): Promise<void> {
-    const result = await apiFetch<LoginResult>("/api/v1/auth/login", {
+    const result = await apiFetch<AuthResponse>("/api/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password })
     });
 
-    const nextAuth: AuthState = {
-      token: result.accessToken,
-      user: result.user,
-      expiresAtUtc: result.expiresAtUtc
-    };
-
-    persistAuth(nextAuth);
+    setAuth({ user: result.user, expiresAtUtc: result.expiresAtUtc });
   }
 
   async function register(
@@ -61,21 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName: string,
     lastName: string
   ): Promise<void> {
-    const result = await apiFetch<LoginResult>("/api/v1/auth/register", {
+    const result = await apiFetch<AuthResponse>("/api/v1/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password, firstName, lastName })
     });
 
-    const nextAuth: AuthState = {
-      token: result.accessToken,
-      user: result.user,
-      expiresAtUtc: result.expiresAtUtc
-    };
-
-    persistAuth(nextAuth);
+    setAuth({ user: result.user, expiresAtUtc: result.expiresAtUtc });
   }
 
-  async function refreshToken(currentAuth: AuthState): Promise<void> {
+  async function refreshToken(): Promise<void> {
     if (isRefreshingRef.current) {
       return;
     }
@@ -83,51 +81,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isRefreshingRef.current = true;
 
     try {
-      const result = await apiFetch<LoginResult>(
-        "/api/v1/auth/refresh",
-        {
-          method: "POST"
-        },
-        currentAuth.token
-      );
+      const result = await apiFetch<AuthResponse>("/api/v1/auth/refresh", {
+        method: "POST"
+      });
 
-      const nextAuth: AuthState = {
-        token: result.accessToken,
-        user: result.user,
-        expiresAtUtc: result.expiresAtUtc
-      };
-
-      persistAuth(nextAuth);
+      setAuth({ user: result.user, expiresAtUtc: result.expiresAtUtc });
     } catch {
-      logout();
+      setAuth(null);
     } finally {
       isRefreshingRef.current = false;
     }
   }
 
-  async function callLogoutEndpoint(currentAuth: AuthState): Promise<void> {
-    try {
-      await apiFetch<void>(
-        "/api/v1/auth/logout",
-        {
-          method: "POST"
-        },
-        currentAuth.token
-      );
-    } catch {
-      // Ignore logout API failures since client-side cleanup is the source of truth for session end.
-    }
-  }
-
   function logout(): void {
-    if (auth) {
-      void callLogoutEndpoint(auth);
-    }
-
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    void apiFetch<void>("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
     setAuth(null);
   }
 
+  // Auto-refresh: check every 30s, refresh if within 2 min of expiry
   useEffect(() => {
     if (!auth) {
       return;
@@ -139,32 +110,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const refreshThresholdMs = 2 * 60 * 1000;
 
       if (expiresAt - now <= refreshThresholdMs) {
-        void refreshToken(auth);
+        void refreshToken();
       }
     }, 30 * 1000);
 
     return () => clearInterval(timer);
   }, [auth]);
 
+  // Global 401/403 listener
   useEffect(() => {
     function handleAuthError(event: Event) {
       const customEvent = event as CustomEvent<{ status: number; path: string }>;
       const requestPath = customEvent.detail?.path ?? "";
 
-      // Do not force logout for explicit auth endpoint failures.
       if (requestPath.startsWith("/api/v1/auth/login") || requestPath.startsWith("/api/v1/auth/register")) {
         return;
       }
 
-      if (auth) {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        setAuth(null);
-      }
+      setAuth(null);
     }
 
     window.addEventListener("erp:auth-error", handleAuthError as EventListener);
     return () => window.removeEventListener("erp:auth-error", handleAuthError as EventListener);
-  }, [auth]);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -172,9 +140,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: auth !== null,
       login,
       register,
-      logout
+      logout,
+      isRestoring
     }),
-    [auth]
+    [auth, isRestoring]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -27,9 +27,12 @@ public sealed class JwtTokenService : ITokenService
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiresAt = DateTime.UtcNow.AddMinutes(expiresMinutes);
 
+        var jti = Guid.NewGuid().ToString();
+
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, jti),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Name, user.FullName),
             new Claim("user_id", user.Id.ToString()),
@@ -45,6 +48,6 @@ public sealed class JwtTokenService : ITokenService
         );
 
         var serializedToken = new JwtSecurityTokenHandler().WriteToken(token);
-        return new LoginResult(serializedToken, expiresAt, user);
+        return new LoginResult(serializedToken, expiresAt, user, jti);
     }
 }

@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ITokenRevocationService, TokenRevocationService>();
         services.AddScoped<AdminDataSeeder>();
 
         return services;

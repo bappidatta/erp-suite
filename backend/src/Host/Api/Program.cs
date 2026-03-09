@@ -36,8 +36,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("frontend", policy =>
         policy.WithOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:5175")
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+            .WithHeaders("Content-Type", "Authorization", "Accept")
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+            .AllowCredentials());
 });
 
 builder.Services
@@ -53,6 +54,19 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (string.IsNullOrEmpty(context.Token) &&
+                    context.Request.Cookies.TryGetValue("erp_access_token", out var cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -83,11 +97,13 @@ app.MapOpenApi("/openapi/{documentName}.json");
 app.MapGet("/", () => Results.Ok(new { service = "ERP Suite API", status = "healthy" }));
 app.MapHealthChecks("/health");
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseCors("frontend");
 app.UseSerilogRequestLogging();
-app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TokenRevocationMiddleware>();
+app.UseMiddleware<TenantContextMiddleware>();
 app.MapControllers();
 
 app.Run();

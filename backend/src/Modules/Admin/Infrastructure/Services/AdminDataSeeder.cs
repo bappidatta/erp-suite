@@ -21,16 +21,34 @@ public sealed class AdminDataSeeder
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
+        // Seed roles if not present
+        if (!await _dbContext.Roles.AnyAsync(cancellationToken))
+        {
+            var adminRole = Role.Create("Admin", "Full system administrator");
+            var userRole = Role.Create("User", "Standard user");
+
+            _dbContext.Roles.Add(adminRole);
+            _dbContext.Roles.Add(userRole);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Seeded default roles: Admin, User");
+        }
+
         if (await _dbContext.Users.AnyAsync(cancellationToken))
         {
             return;
         }
 
+        var adminRoleEntity = await _dbContext.Roles
+            .FirstAsync(r => r.Name == "Admin", cancellationToken);
+
         var defaultAdmin = User.Create(
             "admin@erpsuite.local",
             _passwordHasher.Hash("Admin@123"),
             "System",
-            "Admin");
+            "Admin",
+            adminRoleEntity.Id,
+            mustChangePassword: true);
 
         var defaultCompany = Company.Create(
             "ERP Suite",
@@ -43,6 +61,6 @@ public sealed class AdminDataSeeder
         _dbContext.Companies.Add(defaultCompany);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Seeded default admin user: {Email}", "admin@erpsuite.local");
+        _logger.LogInformation("Seeded default admin user: {Email} (password change required on first login)", "admin@erpsuite.local");
     }
 }

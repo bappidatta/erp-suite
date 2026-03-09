@@ -3,8 +3,12 @@ import { useAuth } from "@shared/auth/auth-context";
 import { AppShell } from "@app/components/layout/AppShell";
 
 export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
   const location = useLocation();
+
+  if (isRestoring) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;

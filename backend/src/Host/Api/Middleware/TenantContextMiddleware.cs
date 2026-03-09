@@ -14,11 +14,25 @@ public sealed class TenantContextMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var companyIdHeader = context.Request.Headers["X-Company-Id"].FirstOrDefault();
-        var companyNameHeader = context.Request.Headers["X-Company-Name"].FirstOrDefault();
+        long companyId = 1L;
+        var companyName = "ERP Suite";
 
-        var companyId = long.TryParse(companyIdHeader, out var parsedId) ? parsedId : 1L;
-        var companyName = string.IsNullOrWhiteSpace(companyNameHeader) ? "ERP Suite" : companyNameHeader;
+        // Derive tenant from authenticated user claims when available
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            var companyIdClaim = context.User.FindFirst("company_id")?.Value;
+            var companyNameClaim = context.User.FindFirst("company_name")?.Value;
+
+            if (long.TryParse(companyIdClaim, out var parsedId))
+            {
+                companyId = parsedId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(companyNameClaim))
+            {
+                companyName = companyNameClaim;
+            }
+        }
 
         context.Items[TenantItemKey] = new TenantContext(companyId, companyName);
 

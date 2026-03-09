@@ -1,4 +1,5 @@
 using ErpSuite.Modules.Admin.Application.Auth;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ namespace Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private const string CookieName = "erp_access_token";
 
     public AuthController(IAuthService authService)
     {
@@ -25,7 +27,8 @@ public sealed class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid email or password." });
         }
 
-        return Ok(result);
+        SetTokenCookie(result.AccessToken, result.ExpiresAtUtc);
+        return Ok(new AuthResponse(result.ExpiresAtUtc, result.User));
     }
 
     [HttpPost("register")]
@@ -37,7 +40,8 @@ public sealed class AuthController : ControllerBase
             return BadRequest(new { message = "User with this email already exists." });
         }
 
-        return Ok(result);
+        SetTokenCookie(result.AccessToken, result.ExpiresAtUtc);
+        return Ok(new AuthResponse(result.ExpiresAtUtc, result.User));
     }
 
     [Authorize]
@@ -56,7 +60,26 @@ public sealed class AuthController : ControllerBase
             return Unauthorized(new { message = "User not found or inactive." });
         }
 
-        return Ok(result);
+        SetTokenCookie(result.AccessToken, result.ExpiresAtUtc);
+        return Ok(new AuthResponse(result.ExpiresAtUtc, result.User));
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var userIdClaim = User.FindFirst("user_id")?.Value;
+        var emailClaim = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+        var nameClaim = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Name)?.Value;
+        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (!long.TryParse(userIdClaim, out var userId) || emailClaim is null)
+        {
+            return Unauthorized(new { message = "Invalid token." });
+        }
+
+        var authUser = new AuthUser(userId, emailClaim, nameClaim ?? "", roleClaim ?? "User");
+        return Ok(authUser);
     }
 
     [Authorize(Policy = "AdminOnly")]
@@ -76,7 +99,42 @@ public sealed class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid token." });
         }
 
-        await _authService.LogoutAsync(userId, cancellationToken);
+        var jti = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        var expClaim = User.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
+        DateTime? tokenExpiry = null;
+        if (long.TryParse(expClaim, out var expUnix))
+        {
+            tokenExpiry = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+        }
+
+        await _authService.LogoutAsync(userId, jti, tokenExpiry, cancellationToken);
+
+        ClearTokenCookie();
         return NoContent();
+    }
+
+    private void SetTokenCookie(string token, DateTime expiresAtUtc)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
+            SameSite = SameSiteMode.Lax,
+            Expires = expiresAtUtc,
+            Path = "/"
+        };
+
+        Response.Cookies.Append(CookieName, token, cookieOptions);
+    }
+
+    private void ClearTokenCookie()
+    {
+        Response.Cookies.Delete(CookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
+            SameSite = SameSiteMode.Lax,
+            Path = "/"
+        });
     }
 }

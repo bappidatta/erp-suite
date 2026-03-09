@@ -10,12 +10,18 @@ public sealed class AuthService : IAuthService
     private readonly ErpDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
+    private readonly ITokenRevocationService _tokenRevocationService;
 
-    public AuthService(ErpDbContext dbContext, IPasswordHasher passwordHasher, ITokenService tokenService)
+    public AuthService(
+        ErpDbContext dbContext,
+        IPasswordHasher passwordHasher,
+        ITokenService tokenService,
+        ITokenRevocationService tokenRevocationService)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
+        _tokenRevocationService = tokenRevocationService;
     }
 
     public async Task<LoginResult?> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -23,6 +29,7 @@ public sealed class AuthService : IAuthService
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
         var user = await _dbContext.Users
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
         if (user is null || !user.IsActive)
@@ -38,7 +45,7 @@ public sealed class AuthService : IAuthService
         user.RecordLogin();
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), user.Role.Name);
         return _tokenService.CreateToken(authUser);
     }
 
@@ -46,31 +53,36 @@ public sealed class AuthService : IAuthService
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
-        // Check if user already exists
         var existingUser = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
         if (existingUser is not null)
         {
-            return null; // User already exists
+            return null;
         }
 
-        // Hash password
+        var userRole = await _dbContext.Roles
+            .FirstOrDefaultAsync(r => r.Name == "User", cancellationToken);
+
+        if (userRole is null)
+        {
+            return null;
+        }
+
         var passwordHash = _passwordHasher.Hash(request.Password);
 
-        // Create new user
-        var user = User.Create(request.Email, passwordHash, request.FirstName, request.LastName);
+        var user = User.Create(request.Email, passwordHash, request.FirstName, request.LastName, userRole.Id);
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // Generate token
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), userRole.Name);
         return _tokenService.CreateToken(authUser);
     }
 
     public async Task<LoginResult?> RefreshAsync(long userId, CancellationToken cancellationToken)
     {
         var user = await _dbContext.Users
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
         if (user is null || !user.IsActive)
@@ -78,21 +90,15 @@ public sealed class AuthService : IAuthService
             return null;
         }
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), user.Role.Name);
         return _tokenService.CreateToken(authUser);
     }
 
-    public Task LogoutAsync(long userId, CancellationToken cancellationToken)
+    public async Task LogoutAsync(long userId, string? jti, DateTime? tokenExpiry, CancellationToken cancellationToken)
     {
-        // JWT is currently stateless. Logout is handled on the client by clearing token state.
-        // This endpoint exists to preserve API contract and support future token revocation.
-        return Task.CompletedTask;
-    }
-
-    private static string ResolveRole(User user)
-    {
-        return user.Email.Equals("admin@erpsuite.local", StringComparison.OrdinalIgnoreCase)
-            ? "Admin"
-            : "User";
+        if (!string.IsNullOrEmpty(jti) && tokenExpiry.HasValue)
+        {
+            await _tokenRevocationService.RevokeAsync(jti, userId, tokenExpiry.Value, cancellationToken);
+        }
     }
 }
