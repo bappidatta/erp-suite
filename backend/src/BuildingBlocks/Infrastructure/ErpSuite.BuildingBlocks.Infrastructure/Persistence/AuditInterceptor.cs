@@ -6,13 +6,6 @@ namespace ErpSuite.BuildingBlocks.Infrastructure.Persistence;
 
 public class AuditInterceptor : SaveChangesInterceptor
 {
-    private readonly string _currentUserId;
-
-    public AuditInterceptor(string currentUserId = "system")
-    {
-        _currentUserId = currentUserId;
-    }
-
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -30,15 +23,20 @@ public class AuditInterceptor : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-    private void ApplyAudit(DbContext? context)
+    private static void ApplyAudit(DbContext? context)
     {
         if (context == null) return;
 
         foreach (var entry in context.ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State is EntityState.Added or EntityState.Modified)
+            switch (entry.State)
             {
-                entry.Entity.SetAudit(_currentUserId);
+                case EntityState.Added when string.IsNullOrEmpty(entry.Entity.CreatedBy):
+                    entry.Entity.SetAudit("system");
+                    break;
+                case EntityState.Modified when entry.Entity.UpdatedAt == null:
+                    entry.Entity.SetAudit("system");
+                    break;
             }
         }
     }

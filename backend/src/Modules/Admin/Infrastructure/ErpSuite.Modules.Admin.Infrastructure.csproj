@@ -4,6 +4,9 @@
     <ProjectReference Include="..\Application\ErpSuite.Modules.Admin.Application.csproj" />
     <ProjectReference Include="..\Domain\ErpSuite.Modules.Admin.Domain.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Infrastructure\ErpSuite.BuildingBlocks.Infrastructure\ErpSuite.BuildingBlocks.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Sales\Domain\ErpSuite.Modules.Sales.Domain.csproj" />
+    <ProjectReference Include="..\..\Procurement\Domain\ErpSuite.Modules.Procurement.Domain.csproj" />
+    <ProjectReference Include="..\..\Finance\Domain\ErpSuite.Modules.Finance.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

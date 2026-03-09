@@ -9,6 +9,10 @@ import { UsersPage } from "@modules/admin/pages/UsersPage";
 import { RolesPage } from "@modules/admin/pages/RolesPage";
 import { OrganizationSettingsPage } from "@modules/admin/pages/OrganizationSettingsPage";
 import { AuditLogPage } from "@modules/admin/pages/AuditLogPage";
+import { CustomersPage } from "@modules/sales/pages/CustomersPage";
+import { VendorsPage } from "@modules/procurement/pages/VendorsPage";
+import { TaxCodesPage } from "@modules/finance/pages/TaxCodesPage";
+import { ChartOfAccountsPage } from "@modules/finance/pages/ChartOfAccountsPage";
 
 export function App() {
   return (
@@ -25,6 +29,10 @@ export function App() {
         <Route path="/admin/roles" element={<RolesPage />} />
         <Route path="/admin/organization" element={<OrganizationSettingsPage />} />
         <Route path="/admin/audit-log" element={<AuditLogPage />} />
+        <Route path="/sales/customers" element={<CustomersPage />} />
+        <Route path="/procurement/vendors" element={<VendorsPage />} />
+        <Route path="/finance/tax-codes" element={<TaxCodesPage />} />
+        <Route path="/finance/accounts" element={<ChartOfAccountsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -10,6 +10,8 @@ import {
   ChevronDown,
   Menu,
   Package,
+  DollarSign,
+  Truck,
 } from "lucide-react";
 import { cn } from "@app/lib/utils";
 import { Button } from "@app/components/ui/button";
@@ -36,12 +38,25 @@ const navItems = [
     ],
   },
   {
+    label: "Sales",
+    icon: DollarSign,
+    submenu: [
+      { label: "Customers", href: "/sales/customers" },
+    ],
+  },
+  {
+    label: "Procurement",
+    icon: Truck,
+    submenu: [
+      { label: "Vendors", href: "/procurement/vendors" },
+    ],
+  },
+  {
     label: "Finance",
     icon: FileText,
     submenu: [
-      { label: "Invoices", href: "/finance/invoices" },
-      { label: "Expenses", href: "/finance/expenses" },
-      { label: "Reports", href: "/finance/reports" },
+      { label: "Tax Codes", href: "/finance/tax-codes" },
+      { label: "Chart of Accounts", href: "/finance/accounts" },
     ],
   },
   {
@@ -51,15 +66,6 @@ const navItems = [
       { label: "Products", href: "/inventory/products" },
       { label: "Warehouses", href: "/inventory/warehouses" },
       { label: "Stock", href: "/inventory/stock" },
-    ],
-  },
-  {
-    label: "Procurement",
-    icon: ShoppingCart,
-    submenu: [
-      { label: "Purchase Orders", href: "/procurement/orders" },
-      { label: "Vendors", href: "/procurement/vendors" },
-      { label: "Requisitions", href: "/procurement/requisitions" },
     ],
   },
 ];

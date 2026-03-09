@@ -2,9 +2,15 @@ using System.Text;
 using Api.Middleware;
 using ErpSuite.Modules.Admin.Application.Auth.Validators;
 using ErpSuite.Modules.Admin.Application.Users.Validators;
+using ErpSuite.Modules.Sales.Application.Customers.Validators;
+using ErpSuite.Modules.Procurement.Application.Vendors.Validators;
+using ErpSuite.Modules.Finance.Application.TaxCodes.Validators;
 using ErpSuite.Modules.Admin.Infrastructure;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
 using ErpSuite.Modules.Admin.Infrastructure.Services;
+using ErpSuite.Modules.Sales.Infrastructure;
+using ErpSuite.Modules.Procurement.Infrastructure;
+using ErpSuite.Modules.Finance.Infrastructure;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -28,11 +34,17 @@ builder.Services.AddDbContext<ErpDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAdminInfrastructure();
+builder.Services.AddSalesInfrastructure();
+builder.Services.AddProcurementInfrastructure();
+builder.Services.AddFinanceInfrastructure();
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateVendorRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateTaxCodeRequestValidator>();
 
 builder.Services.AddCors(options =>
 {

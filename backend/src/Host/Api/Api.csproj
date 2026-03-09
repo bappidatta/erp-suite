@@ -19,5 +19,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Admin\Application\ErpSuite.Modules.Admin.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Admin\Infrastructure\ErpSuite.Modules.Admin.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Sales\Application\ErpSuite.Modules.Sales.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Sales\Infrastructure\ErpSuite.Modules.Sales.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Procurement\Application\ErpSuite.Modules.Procurement.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Procurement\Infrastructure\ErpSuite.Modules.Procurement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\Application\ErpSuite.Modules.Finance.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\Infrastructure\ErpSuite.Modules.Finance.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

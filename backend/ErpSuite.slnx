@@ -30,4 +30,38 @@
   <Folder Name="/src/Modules/Admin/Presentation/">
     <Project Path="src/Modules/Admin/Presentation/ErpSuite.Modules.Admin.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Sales/" />
+  <Folder Name="/src/Modules/Sales/Domain/">
+    <Project Path="src/Modules/Sales/Domain/ErpSuite.Modules.Sales.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Sales/Application/">
+    <Project Path="src/Modules/Sales/Application/ErpSuite.Modules.Sales.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Sales/Infrastructure/">
+    <Project Path="src/Modules/Sales/Infrastructure/ErpSuite.Modules.Sales.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Procurement/" />
+  <Folder Name="/src/Modules/Procurement/Domain/">
+    <Project Path="src/Modules/Procurement/Domain/ErpSuite.Modules.Procurement.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Procurement/Application/">
+    <Project Path="src/Modules/Procurement/Application/ErpSuite.Modules.Procurement.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Procurement/Infrastructure/">
+    <Project Path="src/Modules/Procurement/Infrastructure/ErpSuite.Modules.Procurement.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Finance/" />
+  <Folder Name="/src/Modules/Finance/Domain/">
+    <Project Path="src/Modules/Finance/Domain/ErpSuite.Modules.Finance.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Finance/Application/">
+    <Project Path="src/Modules/Finance/Application/ErpSuite.Modules.Finance.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Finance/Infrastructure/">
+    <Project Path="src/Modules/Finance/Infrastructure/ErpSuite.Modules.Finance.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Unit/">
+    <Project Path="tests/Unit/ErpSuite.Tests.Unit/ErpSuite.Tests.Unit.csproj" />
+  </Folder>
 </Solution>

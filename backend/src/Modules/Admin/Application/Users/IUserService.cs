@@ -1,5 +1,5 @@
 using ErpSuite.BuildingBlocks.Domain.Results;
-using ErpSuite.Modules.Admin.Application.Common;
+using ErpSuite.BuildingBlocks.Application.Common;
 using ErpSuite.Modules.Admin.Application.Users.Dtos;
 
 namespace ErpSuite.Modules.Admin.Application.Users;

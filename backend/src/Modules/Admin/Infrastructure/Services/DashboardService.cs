@@ -1,4 +1,4 @@
-using ErpSuite.Modules.Admin.Application.Common;
+using ErpSuite.BuildingBlocks.Application.Common;
 using ErpSuite.Modules.Admin.Application.Dashboard;
 using ErpSuite.Modules.Admin.Application.Dashboard.Dtos;
 using ErpSuite.Modules.Admin.Domain.Entities;

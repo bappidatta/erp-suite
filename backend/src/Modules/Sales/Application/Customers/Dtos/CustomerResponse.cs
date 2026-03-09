@@ -1,0 +1,26 @@
+namespace ErpSuite.Modules.Sales.Application.Customers.Dtos;
+
+public record CustomerResponse(
+    long Id,
+    string Code,
+    string Name,
+    string? ContactPerson,
+    string? Email,
+    string? Phone,
+    string? Website,
+    string? TaxId,
+    string? AddressLine1,
+    string? AddressLine2,
+    string? City,
+    string? State,
+    string? PostalCode,
+    string? Country,
+    decimal CreditLimit,
+    string Currency,
+    string? PaymentTerms,
+    long? DefaultTaxCodeId,
+    bool IsActive,
+    string? Notes,
+    DateTime CreatedAt,
+    string CreatedBy,
+    DateTime? UpdatedAt);

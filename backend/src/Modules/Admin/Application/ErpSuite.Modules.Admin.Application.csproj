@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\ErpSuite.Modules.Admin.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Application\ErpSuite.BuildingBlocks.Application\ErpSuite.BuildingBlocks.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

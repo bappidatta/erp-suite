@@ -16,7 +16,7 @@ public abstract class BaseEntity
 
     public void SetAudit(string userId)
     {
-        if (Id == 0)
+        if (string.IsNullOrEmpty(CreatedBy))
         {
             CreatedBy = userId;
             CreatedAt = DateTime.UtcNow;
@@ -26,5 +26,6 @@ public abstract class BaseEntity
             UpdatedBy = userId;
             UpdatedAt = DateTime.UtcNow;
         }
+        Version++;
     }
 }

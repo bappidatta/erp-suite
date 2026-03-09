@@ -1,0 +1,24 @@
+namespace ErpSuite.Modules.Procurement.Application.Vendors.Dtos;
+
+public record UpdateVendorRequest(
+    string Name,
+    string? ContactPerson = null,
+    string? Email = null,
+    string? Phone = null,
+    string? Website = null,
+    string? TaxId = null,
+    string? AddressLine1 = null,
+    string? AddressLine2 = null,
+    string? City = null,
+    string? State = null,
+    string? PostalCode = null,
+    string? Country = null,
+    string? PaymentTerms = null,
+    string Currency = "USD",
+    string? BankName = null,
+    string? BankAccountNumber = null,
+    string? BankRoutingNumber = null,
+    string? BankSwiftCode = null,
+    long? DefaultTaxCodeId = null,
+    int LeadTimeDays = 0,
+    string? Notes = null);

@@ -1,6 +1,6 @@
 using ErpSuite.BuildingBlocks.Domain.Results;
 using ErpSuite.Modules.Admin.Application.Auth;
-using ErpSuite.Modules.Admin.Application.Common;
+using ErpSuite.BuildingBlocks.Application.Common;
 using ErpSuite.Modules.Admin.Application.Users;
 using ErpSuite.Modules.Admin.Application.Users.Dtos;
 using ErpSuite.Modules.Admin.Domain.Entities;

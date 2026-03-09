@@ -1,4 +1,4 @@
-using ErpSuite.Modules.Admin.Application.Common;
+using ErpSuite.BuildingBlocks.Application.Common;
 using ErpSuite.Modules.Admin.Application.Dashboard.Dtos;
 
 namespace ErpSuite.Modules.Admin.Application.Dashboard;

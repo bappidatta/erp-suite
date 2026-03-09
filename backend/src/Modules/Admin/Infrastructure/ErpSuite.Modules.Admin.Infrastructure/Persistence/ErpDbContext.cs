@@ -1,5 +1,8 @@
 using ErpSuite.BuildingBlocks.Infrastructure.Persistence;
 using ErpSuite.Modules.Admin.Domain.Entities;
+using ErpSuite.Modules.Sales.Domain.Entities;
+using ErpSuite.Modules.Procurement.Domain.Entities;
+using ErpSuite.Modules.Finance.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ErpSuite.Modules.Admin.Infrastructure.Persistence;
@@ -10,6 +13,7 @@ public class ErpDbContext : BaseDbContext
     {
     }
 
+    // Admin
     public DbSet<User> Users => Set<User>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Role> Roles => Set<Role>();
@@ -18,6 +22,16 @@ public class ErpDbContext : BaseDbContext
     public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
     public DbSet<OrganizationSettings> OrganizationSettings => Set<OrganizationSettings>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // Sales
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    // Procurement
+    public DbSet<Vendor> Vendors => Set<Vendor>();
+
+    // Finance
+    public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+    public DbSet<Account> Accounts => Set<Account>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -175,6 +189,117 @@ public class ErpDbContext : BaseDbContext
             entity.HasIndex(e => e.Module);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.UserId);
+        });
+
+        // ── Sales Entities ──
+
+        // Configure Customer entity
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.ToTable("customers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.ContactPerson).HasColumnName("contact_person").HasMaxLength(256);
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(256);
+            entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(50);
+            entity.Property(e => e.Website).HasColumnName("website").HasMaxLength(256);
+            entity.Property(e => e.TaxId).HasColumnName("tax_id").HasMaxLength(100);
+            entity.Property(e => e.AddressLine1).HasColumnName("address_line1").HasMaxLength(256);
+            entity.Property(e => e.AddressLine2).HasColumnName("address_line2").HasMaxLength(256);
+            entity.Property(e => e.City).HasColumnName("city").HasMaxLength(100);
+            entity.Property(e => e.State).HasColumnName("state").HasMaxLength(100);
+            entity.Property(e => e.PostalCode).HasColumnName("postal_code").HasMaxLength(20);
+            entity.Property(e => e.Country).HasColumnName("country").HasMaxLength(100);
+            entity.Property(e => e.CreditLimit).HasColumnName("credit_limit").HasPrecision(18, 2);
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).HasDefaultValue("USD");
+            entity.Property(e => e.PaymentTerms).HasColumnName("payment_terms").HasMaxLength(100);
+            entity.Property(e => e.DefaultTaxCodeId).HasColumnName("default_tax_code_id");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1000);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.Name);
+        });
+
+        // ── Procurement Entities ──
+
+        // Configure Vendor entity
+        modelBuilder.Entity<Vendor>(entity =>
+        {
+            entity.ToTable("vendors");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.ContactPerson).HasColumnName("contact_person").HasMaxLength(256);
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(256);
+            entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(50);
+            entity.Property(e => e.Website).HasColumnName("website").HasMaxLength(256);
+            entity.Property(e => e.TaxId).HasColumnName("tax_id").HasMaxLength(100);
+            entity.Property(e => e.AddressLine1).HasColumnName("address_line1").HasMaxLength(256);
+            entity.Property(e => e.AddressLine2).HasColumnName("address_line2").HasMaxLength(256);
+            entity.Property(e => e.City).HasColumnName("city").HasMaxLength(100);
+            entity.Property(e => e.State).HasColumnName("state").HasMaxLength(100);
+            entity.Property(e => e.PostalCode).HasColumnName("postal_code").HasMaxLength(20);
+            entity.Property(e => e.Country).HasColumnName("country").HasMaxLength(100);
+            entity.Property(e => e.PaymentTerms).HasColumnName("payment_terms").HasMaxLength(100);
+            entity.Property(e => e.Currency).HasColumnName("currency").HasMaxLength(3).HasDefaultValue("USD");
+            entity.Property(e => e.BankName).HasColumnName("bank_name").HasMaxLength(256);
+            entity.Property(e => e.BankAccountNumber).HasColumnName("bank_account_number").HasMaxLength(50);
+            entity.Property(e => e.BankRoutingNumber).HasColumnName("bank_routing_number").HasMaxLength(50);
+            entity.Property(e => e.BankSwiftCode).HasColumnName("bank_swift_code").HasMaxLength(20);
+            entity.Property(e => e.DefaultTaxCodeId).HasColumnName("default_tax_code_id");
+            entity.Property(e => e.LeadTimeDays).HasColumnName("lead_time_days").HasDefaultValue(0);
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1000);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.Name);
+        });
+
+        // ── Finance Entities ──
+
+        // Configure TaxCode entity
+        modelBuilder.Entity<TaxCode>(entity =>
+        {
+            entity.ToTable("tax_codes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Rate).HasColumnName("rate").HasPrecision(8, 4);
+            entity.Property(e => e.Type).HasColumnName("type").HasConversion<int>();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.AppliesToSales).HasColumnName("applies_to_sales").HasDefaultValue(true);
+            entity.Property(e => e.AppliesToPurchases).HasColumnName("applies_to_purchases").HasDefaultValue(true);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        // Configure Account (Chart of Accounts) entity
+        modelBuilder.Entity<Account>(entity =>
+        {
+            entity.ToTable("accounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Type).HasColumnName("type").HasConversion<int>();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.ParentId).HasColumnName("parent_id");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.IsHeader).HasColumnName("is_header").HasDefaultValue(false);
+            entity.Property(e => e.Level).HasColumnName("level").HasDefaultValue(0);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
