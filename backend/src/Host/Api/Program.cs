@@ -5,8 +5,14 @@ using ErpSuite.Modules.Admin.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ErpSuite";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ErpSuite.Client";
@@ -43,6 +49,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -62,8 +69,10 @@ using (var scope = app.Services.CreateScope())
 app.MapOpenApi("/openapi/{documentName}.json");
 
 app.MapGet("/", () => Results.Ok(new { service = "ERP Suite API", status = "healthy" }));
+app.MapHealthChecks("/health");
 
 app.UseCors("frontend");
+app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

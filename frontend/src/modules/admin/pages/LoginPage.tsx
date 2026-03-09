@@ -1,35 +1,21 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/components/ui/card";
 import { Input } from "@app/components/ui/input";
 import { Label } from "@app/components/ui/label";
-import { useAuth } from "@shared/auth/auth-context";
+import { useLoginMutation } from "@modules/admin/hooks/useLoginMutation";
 import { AlertTriangle, Lock, Mail, ArrowRight, Shield } from "lucide-react";
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const loginMutation = useLoginMutation();
 
   const [email, setEmail] = useState("admin@erpsuite.local");
   const [password, setPassword] = useState("Admin@123");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      await login(email, password);
-      navigate("/dashboard", { replace: true });
-    } catch {
-      setError("Invalid credentials or API is not reachable.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    loginMutation.mutate({ email, password });
   }
 
   return (
@@ -171,10 +157,14 @@ export function LoginPage() {
                 </div>
 
                 {/* Error Alert */}
-                {error && (
+                {loginMutation.error && (
                   <Alert variant="destructive" className="border-destructive/50">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>
+                      {loginMutation.error instanceof Error 
+                        ? loginMutation.error.message 
+                        : "Invalid credentials or API is not reachable."}
+                    </AlertDescription>
                   </Alert>
                 )}
 
@@ -182,9 +172,9 @@ export function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full h-11 text-base font-medium"
-                  disabled={isSubmitting}
+                  disabled={loginMutation.isPending}
                 >
-                  {isSubmitting ? (
+                  {loginMutation.isPending ? (
                     <>
                       <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Signing in...
