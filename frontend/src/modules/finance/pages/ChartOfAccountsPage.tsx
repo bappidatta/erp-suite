@@ -1,9 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
+import type { ColumnDef, ColumnFiltersState, OnChangeFn, SortingState } from "@tanstack/react-table";
 import { Plus, Search, Trash2, Edit, ChevronRight, ChevronDown, FolderTree } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/card";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Badge } from "@app/components/ui/badge";
+import {
+  Card, CardContent,
+} from "@app/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@app/components/ui/table";
@@ -11,8 +14,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@app/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/components/ui/select";
-import { Label } from "@app/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/components/ui/tabs";
+import {
+  PageHeader, DeleteDialog, FormError,
+  PageLayout, DataTable, FormField, FormGrid, FormActions, StatusBadge,
+  ColumnFilterInput, ColumnFilterSelect,
+} from "@shared/components";
 import { getAccounts, getAccountTree, createAccount, updateAccount, deleteAccount } from "../api/financeApi";
 import type { Account, AccountTreeNode, CreateAccountRequest, UpdateAccountRequest, PagedResult } from "../types";
 
@@ -22,6 +29,11 @@ const ACCOUNT_TYPES = [
   { value: "2", label: "Equity" },
   { value: "3", label: "Revenue" },
   { value: "4", label: "Expense" },
+];
+
+const TYPE_OPTIONS = [
+  { value: "", label: "All Types" },
+  ...ACCOUNT_TYPES,
 ];
 
 function AccountForm({
@@ -73,23 +85,20 @@ function AccountForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <FormError error={error} />
 
       {!account && (
-        <div className="space-y-1">
-          <Label htmlFor="code">Code</Label>
+        <FormField id="code" label="Code">
           <Input id="code" required value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
-        </div>
+        </FormField>
       )}
 
-      <div className="space-y-1">
-        <Label htmlFor="name">Name</Label>
+      <FormField id="name" label="Name">
         <Input id="name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-      </div>
+      </FormField>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="type">Account Type</Label>
+      <FormGrid>
+        <FormField id="type" label="Account Type">
           <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v ?? "0" }))}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -98,9 +107,8 @@ function AccountForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="parentId">Parent Account</Label>
+        </FormField>
+        <FormField id="parentId" label="Parent Account">
           <Select value={form.parentId} onValueChange={(v) => setForm((f) => ({ ...f, parentId: v ?? "" }))}>
             <SelectTrigger><SelectValue placeholder="None (Top-level)" /></SelectTrigger>
             <SelectContent>
@@ -110,25 +118,19 @@ function AccountForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="space-y-1">
-        <Label htmlFor="description">Description</Label>
+      <FormField id="description" label="Description">
         <Input id="description" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-      </div>
+      </FormField>
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={form.isHeader} onChange={(e) => setForm((f) => ({ ...f, isHeader: e.target.checked }))} className="rounded" />
         Header Account (group node, not postable)
       </label>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : account ? "Update Account" : "Create Account"}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} saving={saving} saveLabel={account ? "Update Account" : "Create Account"} />
     </form>
   );
 }
@@ -182,13 +184,42 @@ export function ChartOfAccountsPage() {
   const [result, setResult] = useState<PagedResult<Account> | null>(null);
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<AccountTreeNode | Account | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const mapSortField = (columnId: string) => {
+    switch (columnId) {
+      case "code":
+        return "code";
+      case "name":
+        return "name";
+      case "typeName":
+        return "type";
+      default:
+        return columnId;
+    }
+  };
+
+  const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+    setSorting((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next.slice(0, 1);
+    });
+  };
+
+  const handleFilteringChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    setColumnFilters((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next;
+    });
+  };
 
   const fetchTree = useCallback(() => {
     setLoading(true);
@@ -198,14 +229,20 @@ export function ChartOfAccountsPage() {
   }, []);
 
   const fetchList = useCallback(() => {
+    const search = String(columnFilters.find((filter) => filter.id === "searchTerm")?.value ?? "");
+    const typeFilter = String(columnFilters.find((filter) => filter.id === "type")?.value ?? "");
     const params: Record<string, string> = { page: String(page), pageSize: "50" };
     if (search) params.searchTerm = search;
     if (typeFilter) params.type = typeFilter;
+    if (sorting[0]) {
+      params.sortBy = mapSortField(sorting[0].id);
+      params.sortDescending = String(sorting[0].desc);
+    }
     setLoading(true);
     getAccounts(params)
       .then(setResult)
       .finally(() => setLoading(false));
-  }, [page, search, typeFilter]);
+  }, [columnFilters, page, sorting]);
 
   const fetchAllAccounts = useCallback(() => {
     getAccounts({ page: "1", pageSize: "500" }).then((r) => {
@@ -251,17 +288,86 @@ export function ChartOfAccountsPage() {
 
   const accounts = result?.items ?? [];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-          <p className="text-muted-foreground">Manage general ledger accounts</p>
+  const listColumns: ColumnDef<Account>[] = [
+    {
+      accessorKey: "code",
+      header: "Code",
+      cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
+      meta: {
+        filterId: "searchTerm",
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterInput
+            value={value}
+            onChange={onChange}
+            placeholder="Search…"
+          />
+        ),
+      },
+    },
+    { accessorKey: "name", header: "Name" },
+    {
+      accessorKey: "typeName",
+      header: "Type",
+      cell: ({ row }) => <Badge variant="outline">{row.original.typeName}</Badge>,
+      enableSorting: false,
+      meta: {
+        filterId: "type",
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterSelect
+            value={value}
+            onChange={onChange}
+            options={TYPE_OPTIONS}
+            placeholder="All Types"
+          />
+        ),
+      },
+    },
+    {
+      accessorKey: "parentName",
+      header: "Parent",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.parentName ?? "—"}</span>,
+    },
+    {
+      accessorKey: "isHeader",
+      header: "Kind",
+      cell: ({ row }) => row.original.isHeader ? "Header" : "Postable",
+      enableSorting: false,
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge isActive={row.original.isActive} />,
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      meta: { className: "text-right", headerClassName: "text-right" },
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row.original.id)} title="Edit">
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(row.original)} title="Delete">
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
         </div>
-        <Button onClick={() => { setEditingAccount(undefined); setFormOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Account
-        </Button>
-      </div>
+      ),
+    },
+  ];
+
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Chart of Accounts"
+        description="Manage general ledger accounts"
+        action={
+          <Button onClick={() => { setEditingAccount(undefined); setFormOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Add Account
+          </Button>
+        }
+      />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -283,15 +389,17 @@ export function ChartOfAccountsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">Loading…</TableCell></TableRow>
-                  ) : tree.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">No accounts found.</TableCell></TableRow>
-                  ) : (
-                    tree.map((node) => (
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">Loading…</TableCell>
+                      </TableRow>
+                    ) : tree.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">No accounts found.</TableCell>
+                      </TableRow>
+                    ) : tree.map((node) => (
                       <TreeNode key={node.id} node={node} onEdit={handleEdit} onDelete={setDeleteTarget} />
-                    ))
-                  )}
+                    ))}
                 </TableBody>
               </Table>
             </CardContent>
@@ -299,82 +407,15 @@ export function ChartOfAccountsPage() {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by name or code…" className="pl-9" value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-            </div>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v ?? ""); setPage(1); }}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="All Types" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
-                {ACCOUNT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Kind</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">Loading…</TableCell></TableRow>
-                  ) : accounts.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No accounts found.</TableCell></TableRow>
-                  ) : (
-                    accounts.map((a) => (
-                      <TableRow key={a.id}>
-                        <TableCell className="font-medium">{a.code}</TableCell>
-                        <TableCell>{a.name}</TableCell>
-                        <TableCell><Badge variant="outline">{a.typeName}</Badge></TableCell>
-                        <TableCell className="text-muted-foreground">{a.parentName ?? "—"}</TableCell>
-                        <TableCell>{a.isHeader ? "Header" : "Postable"}</TableCell>
-                        <TableCell>
-                          <Badge variant={a.isActive ? "default" : "secondary"}>{a.isActive ? "Active" : "Inactive"}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(a.id)} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(a)} title="Delete">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {result && result.totalPages > 1 && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                Showing {(result.page - 1) * result.pageSize + 1}–{Math.min(result.page * result.pageSize, result.totalCount)} of {result.totalCount}
-              </span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={!result.hasPreviousPage} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                <Button variant="outline" size="sm" disabled={!result.hasNextPage} onClick={() => setPage((p) => p + 1)}>Next</Button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={listColumns}
+            data={accounts}
+            loading={loading}
+            emptyText="No accounts found."
+            filtering={{ state: columnFilters, onChange: handleFilteringChange, manual: true }}
+            sorting={{ state: sorting, onChange: handleSortingChange, manual: true }}
+            pagination={result ? { result, onPrevious: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) } : undefined}
+          />
         </TabsContent>
       </Tabs>
 
@@ -385,18 +426,14 @@ export function ChartOfAccountsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Delete Account</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong> ({deleteTarget?.code})? This action cannot be undone.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <DeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Account"
+        entityLabel={deleteTarget ? `${deleteTarget.name} (${deleteTarget.code})` : ""}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
+    </PageLayout>
   );
 }

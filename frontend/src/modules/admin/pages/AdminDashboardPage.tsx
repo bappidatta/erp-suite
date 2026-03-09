@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/car
 import { Badge } from "@app/components/ui/badge";
 import { getDashboardStats, getAuditLogs } from "../api/adminApi";
 import type { DashboardStats, AuditLog } from "../types";
+import { PageLayout, PageHeader } from "@shared/components";
 
 const quickLinks = [
   { label: "Users", href: "/admin/users", icon: Users, color: "text-blue-600" },
@@ -38,11 +39,8 @@ export function AdminDashboardPage() {
     : [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Overview</h1>
-        <p className="text-muted-foreground">System overview and administration</p>
-      </div>
+    <PageLayout gap="6">
+      <PageHeader title="Admin Overview" description="System overview and administration" />
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -116,6 +114,6 @@ export function AdminDashboardPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }

@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { Label } from "@app/components/ui/label";
 import { useLoginMutation } from "@modules/admin/hooks/useLoginMutation";
+import { FormField } from "@shared/components";
 import { AlertTriangle, Lock, Mail, ArrowRight } from "lucide-react";
 import { parseApiError } from "@shared/lib/error-utils";
 import { AuthLayout } from "@app/components/layout/AuthLayout";
@@ -40,10 +40,7 @@ export function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">
-            Email address
-          </Label>
+        <FormField id="email" label="Email address">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -57,14 +54,13 @@ export function LoginPage() {
               required
             />
           </div>
-        </div>
+        </FormField>
 
         {/* Password Field */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-medium">
-              Password
-            </Label>
+        <FormField
+          id="password"
+          label="Password"
+          labelAction={
             <button
               type="button"
               className="text-sm text-primary hover:underline"
@@ -72,7 +68,8 @@ export function LoginPage() {
             >
               Forgot password?
             </button>
-          </div>
+          }
+        >
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -86,7 +83,7 @@ export function LoginPage() {
               required
             />
           </div>
-        </div>
+        </FormField>
 
         {/* Error Alert */}
         {loginMutation.error && (

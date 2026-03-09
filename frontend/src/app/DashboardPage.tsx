@@ -1,4 +1,5 @@
 import { useAuth } from "@shared/auth/auth-context";
+import { PageLayout } from "@shared/components";
 import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/card";
 import { Badge } from "@app/components/ui/badge";
 import {
@@ -104,7 +105,7 @@ export function DashboardPage() {
   })();
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <PageLayout gap="6" className="max-w-7xl mx-auto">
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -224,6 +225,6 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }

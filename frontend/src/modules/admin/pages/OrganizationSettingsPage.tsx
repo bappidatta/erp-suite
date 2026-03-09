@@ -3,9 +3,9 @@ import { Save, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/card";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { Label } from "@app/components/ui/label";
 import { getOrganizationSettings, updateOrganizationSettings, uploadLogo } from "../api/adminApi";
 import type { OrganizationSettings, UpdateOrganizationSettingsRequest } from "../types";
+import { PageHeader, FormError, PageLayout, FormField, FormGrid } from "@shared/components";
 
 const TIMEZONES = ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Paris", "Asia/Kolkata", "Asia/Tokyo", "Australia/Sydney"];
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", "CHF", "CNY", "SGD"];
@@ -84,21 +84,18 @@ export function OrganizationSettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <PageLayout>
         <div className="h-8 w-48 animate-pulse rounded bg-muted" />
         <div className="h-64 animate-pulse rounded bg-muted" />
-      </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Organization Settings</h1>
-        <p className="text-muted-foreground">Configure your organization information</p>
-      </div>
+    <PageLayout gap="6" className="max-w-2xl">
+      <PageHeader title="Organization Settings" description="Configure your organization information" />
 
-      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <FormError error={error} />
       {saved && <div className="rounded-md bg-green-50 p-3 text-sm text-green-700 border border-green-200">Settings saved successfully.</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -106,38 +103,31 @@ export function OrganizationSettingsPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Company Information</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="companyName">Company Name *</Label>
+            <FormField id="companyName" label="Company Name *">
               <Input id="companyName" required value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="legalName">Legal Name</Label>
+            </FormField>
+            <FormGrid gap="4">
+              <FormField id="legalName" label="Legal Name">
                 <Input id="legalName" {...field("legalName")} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="registrationNumber">Registration Number</Label>
+              </FormField>
+              <FormField id="registrationNumber" label="Registration Number">
                 <Input id="registrationNumber" {...field("registrationNumber")} />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="address">Address</Label>
+              </FormField>
+            </FormGrid>
+            <FormField id="address" label="Address">
               <Input id="address" {...field("address")} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="phone">Phone</Label>
+            </FormField>
+            <FormGrid gap="4">
+              <FormField id="phone" label="Phone">
                 <Input id="phone" type="tel" {...field("phone")} />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="email">Email</Label>
+              </FormField>
+              <FormField id="email" label="Email">
                 <Input id="email" type="email" {...field("email")} />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="website">Website</Label>
+              </FormField>
+            </FormGrid>
+            <FormField id="website" label="Website">
               <Input id="website" type="url" {...field("website")} />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 
@@ -145,9 +135,8 @@ export function OrganizationSettingsPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Regional Settings</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="currency">Currency</Label>
+            <FormGrid gap="4">
+              <FormField id="currency" label="Currency">
                 <select
                   id="currency"
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
@@ -156,9 +145,8 @@ export function OrganizationSettingsPage() {
                 >
                   {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="dateFormat">Date Format</Label>
+              </FormField>
+              <FormField id="dateFormat" label="Date Format">
                 <select
                   id="dateFormat"
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
@@ -168,11 +156,10 @@ export function OrganizationSettingsPage() {
                   <option value="">Select format</option>
                   {DATE_FORMATS.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="timeZone">Time Zone</Label>
+              </FormField>
+            </FormGrid>
+            <FormGrid gap="4">
+              <FormField id="timeZone" label="Time Zone">
                 <select
                   id="timeZone"
                   className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
@@ -182,12 +169,11 @@ export function OrganizationSettingsPage() {
                   <option value="">Select timezone</option>
                   {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                 </select>
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="fiscalYearStart">Fiscal Year Start (MM-DD)</Label>
+              </FormField>
+              <FormField id="fiscalYearStart" label="Fiscal Year Start (MM-DD)">
                 <Input id="fiscalYearStart" placeholder="01-01" {...field("fiscalYearStart")} />
-              </div>
-            </div>
+              </FormField>
+            </FormGrid>
           </CardContent>
         </Card>
 
@@ -199,17 +185,18 @@ export function OrganizationSettingsPage() {
               <img src={settings.logoPath} alt="Logo" className="h-16 object-contain" />
             )}
             <div>
-              <Label htmlFor="logo">Upload Logo (JPG, PNG, SVG — max 5MB)</Label>
-              <div className="mt-1 flex items-center gap-3">
-                <label
-                  htmlFor="logo"
-                  className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-                >
-                  <Upload className="h-4 w-4" />
-                  {uploading ? "Uploading…" : "Choose file"}
-                  <input id="logo" type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} disabled={uploading} />
-                </label>
-              </div>
+              <FormField id="logo" label="Upload Logo (JPG, PNG, SVG — max 5MB)">
+                <div className="flex items-center gap-3">
+                  <label
+                    htmlFor="logo"
+                    className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {uploading ? "Uploading…" : "Choose file"}
+                    <input id="logo" type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} disabled={uploading} />
+                  </label>
+                </div>
+              </FormField>
             </div>
           </CardContent>
         </Card>
@@ -221,6 +208,6 @@ export function OrganizationSettingsPage() {
           </Button>
         </div>
       </form>
-    </div>
+    </PageLayout>
   );
 }

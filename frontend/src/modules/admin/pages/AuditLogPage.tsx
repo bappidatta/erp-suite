@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Search } from "lucide-react";
 import { Card, CardContent } from "@app/components/ui/card";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { Label } from "@app/components/ui/label";
 import { Badge } from "@app/components/ui/badge";
 import { getAuditLogs } from "../api/adminApi";
 import type { AuditLog, PagedResult } from "../types";
+import { PageLayout, PageHeader, FormField, DataTable } from "@shared/components";
 
 const MODULES = ["Admin", "Finance", "HR", "Inventory", "MasterData", "Procurement", "Reporting", "Sales"];
 
@@ -66,19 +67,60 @@ export function AuditLogPage() {
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
 
+  const columns: ColumnDef<AuditLog>[] = [
+    {
+      accessorKey: "createdAt",
+      header: "Timestamp",
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
+          {formatDate(row.original.createdAt)}
+        </span>
+      ),
+    },
+    {
+      id: "user",
+      header: "User",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const log = row.original;
+        return log.userName ?? (log.userId ? `User #${log.userId}` : "System");
+      },
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${actionBadgeClass(row.original.action)}`}>
+          {row.original.action}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "module",
+      header: "Module",
+      cell: ({ row }) => <Badge variant="outline" className="text-xs">{row.original.module}</Badge>,
+    },
+    {
+      accessorKey: "entityId",
+      header: "Entity ID",
+      cell: ({ row }) => <span className="font-mono text-xs">{row.original.entityId ?? "—"}</span>,
+    },
+    {
+      accessorKey: "ipAddress",
+      header: "IP Address",
+      cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.ipAddress ?? "—"}</span>,
+    },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Audit Log</h1>
-        <p className="text-muted-foreground">Track all system actions and changes</p>
-      </div>
+    <PageLayout>
+      <PageHeader title="Audit Log" description="Track all system actions and changes" />
 
       {/* Filters */}
       <Card>
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="space-y-1">
-              <Label htmlFor="module">Module</Label>
+            <FormField id="module" label="Module">
               <select
                 id="module"
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
@@ -88,34 +130,31 @@ export function AuditLogPage() {
                 <option value="">All Modules</option>
                 {MODULES.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="userId">User ID</Label>
+            </FormField>
+            <FormField id="userId" label="User ID">
               <Input
                 id="userId"
                 placeholder="e.g. 42"
                 value={filters.userId}
                 onChange={(e) => setFilters((f) => ({ ...f, userId: e.target.value }))}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="dateFrom">From</Label>
+            </FormField>
+            <FormField id="dateFrom" label="From">
               <Input
                 id="dateFrom"
                 type="date"
                 value={filters.dateFrom}
                 onChange={(e) => setFilters((f) => ({ ...f, dateFrom: e.target.value }))}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="dateTo">To</Label>
+            </FormField>
+            <FormField id="dateTo" label="To">
               <Input
                 id="dateTo"
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => setFilters((f) => ({ ...f, dateTo: e.target.value }))}
               />
-            </div>
+            </FormField>
           </div>
           <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={handleApply}>
@@ -126,90 +165,9 @@ export function AuditLogPage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Timestamp</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">User</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Action</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Module</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Entity ID</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">IP Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b">
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : !result?.items.length ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                    No audit logs found.
-                  </td>
-                </tr>
-              ) : (
-                result.items.map((log) => (
-                  <tr key={log.id} className="border-b transition-colors hover:bg-muted/30">
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                      {formatDate(log.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {log.userName ?? (log.userId ? `User #${log.userId}` : "System")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${actionBadgeClass(log.action)}`}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs">{log.module}</Badge>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs">{log.entityId ?? "—"}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{log.ipAddress ?? "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {result && result.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <span className="text-sm text-muted-foreground">
-              {result.totalCount} entries — Page {result.page} of {result.totalPages}
-            </span>
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => p - 1)}
-                disabled={!result.hasPreviousPage}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={!result.hasNextPage}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
+      <DataTable columns={columns} data={result?.items ?? []} loading={loading} emptyText="No audit logs found."
+        pagination={result ? { result, onPrevious: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) } : undefined}
+      />
+    </PageLayout>
   );
 }

@@ -1,24 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Plus, Trash2, Edit, Shield } from "lucide-react";
-import { Card, CardContent } from "@app/components/ui/card";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Badge } from "@app/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@app/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@app/components/ui/dialog";
-import { Label } from "@app/components/ui/label";
+import {
+  PageHeader, DeleteDialog, FormError,
+  PageLayout, DataTable, FormField, FormActions,
+} from "@shared/components";
 import { getRoles, createRole, updateRole, deleteRole, getAllPermissions, assignPermissions } from "../api/adminApi";
 import type { Role, Permission, CreateRoleRequest, RoleDetail, UpdateRoleRequest } from "../types";
 import { getRoleById } from "../api/adminApi";
@@ -51,19 +46,14 @@ function RoleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
-      <div className="space-y-1">
-        <Label htmlFor="name">Role Name</Label>
+      <FormError error={error} />
+      <FormField id="name" label="Role Name">
         <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="description">Description</Label>
+      </FormField>
+      <FormField id="description" label="Description">
         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving…" : role ? "Update Role" : "Create Role"}</Button>
-      </div>
+      </FormField>
+      <FormActions onCancel={onCancel} saving={saving} saveLabel={role ? "Update Role" : "Create Role"} />
     </form>
   );
 }
@@ -207,74 +197,69 @@ export function RolesPage() {
     setPermissionsRole(detail);
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Roles</h1>
-          <p className="text-muted-foreground">Manage roles and permissions</p>
-        </div>
-        <Button onClick={() => { setEditingRole(undefined); setFormOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Role
-        </Button>
-      </div>
+  const columns: ColumnDef<Role>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.description ?? "—"}</span>,
+    },
+    { accessorKey: "userCount", header: "Users" },
+    { accessorKey: "permissionCount", header: "Permissions" },
+    {
+      accessorKey: "isSystem",
+      header: "Type",
+      cell: ({ row }) =>
+        row.original.isSystem
+          ? <Badge variant="secondary">System</Badge>
+          : <Badge variant="outline">Custom</Badge>,
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      meta: { className: "text-right", headerClassName: "text-right" },
+      cell: ({ row }) => {
+        const role = row.original;
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button variant="ghost" size="sm" onClick={() => openPermissions(role)} title="Set Permissions">
+              <Shield className="h-4 w-4" />
+            </Button>
+            {!role.isSystem && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { setEditingRole(role); setFormOpen(true); }} title="Edit">
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(role)} title="Delete">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Users</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">Loading…</TableCell>
-                </TableRow>
-              ) : roles.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">No roles found.</TableCell>
-                </TableRow>
-              ) : (
-                roles.map((role) => (
-                  <TableRow key={role.id}>
-                    <TableCell className="font-medium">{role.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{role.description ?? "—"}</TableCell>
-                    <TableCell>{role.userCount}</TableCell>
-                    <TableCell>{role.permissionCount}</TableCell>
-                    <TableCell>
-                      {role.isSystem ? <Badge variant="secondary">System</Badge> : <Badge variant="outline">Custom</Badge>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openPermissions(role)} title="Set Permissions">
-                          <Shield className="h-4 w-4" />
-                        </Button>
-                        {!role.isSystem && (
-                          <>
-                            <Button variant="ghost" size="sm" onClick={() => { setEditingRole(role); setFormOpen(true); }} title="Edit">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(role)} title="Delete">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Roles"
+        description="Manage roles and permissions"
+        action={
+          <Button onClick={() => { setEditingRole(undefined); setFormOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Add Role
+          </Button>
+        }
+      />
+
+      <DataTable columns={columns} data={roles} loading={loading} emptyText="No roles found." />
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -307,22 +292,14 @@ export function RolesPage() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete Role</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete the role <strong>{deleteTarget?.name}</strong>?
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <DeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Role"
+        entityLabel={deleteTarget?.name ?? ""}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
+    </PageLayout>
   );
 }

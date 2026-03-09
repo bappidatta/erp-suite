@@ -1,17 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, Trash2, Edit, CheckCircle, XCircle } from "lucide-react";
-import { Card, CardContent } from "@app/components/ui/card";
+import type { ColumnDef, ColumnFiltersState, OnChangeFn, SortingState } from "@tanstack/react-table";
+import { Plus, Trash2, Edit, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { Badge } from "@app/components/ui/badge";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@app/components/ui/table";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@app/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/components/ui/select";
-import { Label } from "@app/components/ui/label";
+import {
+  PageHeader, DeleteDialog, FormError,
+  PageLayout, DataTable, FormField, FormGrid, FormActions, StatusBadge,
+  ColumnFilterInput, ColumnFilterSelect,
+} from "@shared/components";
 import { getVendors, createVendor, updateVendor, deleteVendor, activateVendor, deactivateVendor } from "../api/procurementApi";
 import type { Vendor, CreateVendorRequest, UpdateVendorRequest, PagedResult } from "../types";
 
@@ -98,128 +98,102 @@ function VendorForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <FormError error={error} />
 
       {!vendor && (
-        <div className="space-y-1">
-          <Label htmlFor="code">Code</Label>
+        <FormField id="code" label="Code">
           <Input id="code" required value={form.code} onChange={(e) => set("code", e.target.value)} />
-        </div>
+        </FormField>
       )}
 
-      <div className="space-y-1">
-        <Label htmlFor="name">Name</Label>
+      <FormField id="name" label="Name">
         <Input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} />
-      </div>
+      </FormField>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="contactPerson">Contact Person</Label>
+      <FormGrid>
+        <FormField id="contactPerson" label="Contact Person">
           <Input id="contactPerson" value={form.contactPerson} onChange={(e) => set("contactPerson", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="email">Email</Label>
+        </FormField>
+        <FormField id="email" label="Email">
           <Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="phone">Phone</Label>
+      <FormGrid>
+        <FormField id="phone" label="Phone">
           <Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="website">Website</Label>
+        </FormField>
+        <FormField id="website" label="Website">
           <Input id="website" value={form.website} onChange={(e) => set("website", e.target.value)} />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="space-y-1">
-        <Label htmlFor="taxId">Tax ID</Label>
+      <FormField id="taxId" label="Tax ID">
         <Input id="taxId" value={form.taxId} onChange={(e) => set("taxId", e.target.value)} />
-      </div>
+      </FormField>
 
-      <div className="space-y-1">
-        <Label htmlFor="addressLine1">Address Line 1</Label>
+      <FormField id="addressLine1" label="Address Line 1">
         <Input id="addressLine1" value={form.addressLine1} onChange={(e) => set("addressLine1", e.target.value)} />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="addressLine2">Address Line 2</Label>
+      </FormField>
+      <FormField id="addressLine2" label="Address Line 2">
         <Input id="addressLine2" value={form.addressLine2} onChange={(e) => set("addressLine2", e.target.value)} />
-      </div>
+      </FormField>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="city">City</Label>
+      <FormGrid cols={3}>
+        <FormField id="city" label="City">
           <Input id="city" value={form.city} onChange={(e) => set("city", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="state">State</Label>
+        </FormField>
+        <FormField id="state" label="State">
           <Input id="state" value={form.state} onChange={(e) => set("state", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="postalCode">Postal Code</Label>
+        </FormField>
+        <FormField id="postalCode" label="Postal Code">
           <Input id="postalCode" value={form.postalCode} onChange={(e) => set("postalCode", e.target.value)} />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="country">Country</Label>
+      <FormGrid>
+        <FormField id="country" label="Country">
           <Input id="country" value={form.country} onChange={(e) => set("country", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="currency">Currency</Label>
+        </FormField>
+        <FormField id="currency" label="Currency">
           <Input id="currency" maxLength={3} value={form.currency} onChange={(e) => set("currency", e.target.value)} />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="paymentTerms">Payment Terms</Label>
+      <FormGrid>
+        <FormField id="paymentTerms" label="Payment Terms">
           <Input id="paymentTerms" value={form.paymentTerms} onChange={(e) => set("paymentTerms", e.target.value)} />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="leadTimeDays">Lead Time (Days)</Label>
+        </FormField>
+        <FormField id="leadTimeDays" label="Lead Time (Days)">
           <Input id="leadTimeDays" type="number" min="0" value={form.leadTimeDays} onChange={(e) => set("leadTimeDays", e.target.value)} />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
       <fieldset className="border rounded-md p-3 space-y-3">
         <legend className="text-sm font-medium px-1">Banking Details</legend>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="bankName">Bank Name</Label>
+        <FormGrid>
+          <FormField id="bankName" label="Bank Name">
             <Input id="bankName" value={form.bankName} onChange={(e) => set("bankName", e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="bankAccountNumber">Account Number</Label>
+          </FormField>
+          <FormField id="bankAccountNumber" label="Account Number">
             <Input id="bankAccountNumber" value={form.bankAccountNumber} onChange={(e) => set("bankAccountNumber", e.target.value)} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="bankRoutingNumber">Routing Number</Label>
+          </FormField>
+        </FormGrid>
+        <FormGrid>
+          <FormField id="bankRoutingNumber" label="Routing Number">
             <Input id="bankRoutingNumber" value={form.bankRoutingNumber} onChange={(e) => set("bankRoutingNumber", e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="bankSwiftCode">SWIFT Code</Label>
+          </FormField>
+          <FormField id="bankSwiftCode" label="SWIFT Code">
             <Input id="bankSwiftCode" value={form.bankSwiftCode} onChange={(e) => set("bankSwiftCode", e.target.value)} />
-          </div>
-        </div>
+          </FormField>
+        </FormGrid>
       </fieldset>
 
-      <div className="space-y-1">
-        <Label htmlFor="notes">Notes</Label>
+      <FormField id="notes" label="Notes">
         <Input id="notes" value={form.notes} onChange={(e) => set("notes", e.target.value)} />
-      </div>
+      </FormField>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : vendor ? "Update Vendor" : "Create Vendor"}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} saving={saving} saveLabel={vendor ? "Update Vendor" : "Create Vendor"} />
     </form>
   );
 }
@@ -227,23 +201,56 @@ function VendorForm({
 export function VendorsPage() {
   const [result, setResult] = useState<PagedResult<Vendor> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Vendor | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const mapSortField = (columnId: string) => {
+    switch (columnId) {
+      case "code":
+        return "code";
+      case "name":
+        return "name";
+      default:
+        return columnId;
+    }
+  };
+
+  const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+    setSorting((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next.slice(0, 1);
+    });
+  };
+
+  const handleFilteringChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    setColumnFilters((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next;
+    });
+  };
+
   const fetchVendors = useCallback(() => {
+    const search = String(columnFilters.find((filter) => filter.id === "searchTerm")?.value ?? "");
+    const statusFilter = String(columnFilters.find((filter) => filter.id === "isActive")?.value ?? "");
     const params: Record<string, string> = { page: String(page), pageSize: "20" };
     if (search) params.searchTerm = search;
     if (statusFilter) params.isActive = statusFilter;
+    if (sorting[0]) {
+      params.sortBy = mapSortField(sorting[0].id);
+      params.sortDescending = String(sorting[0].desc);
+    }
     setLoading(true);
     getVendors(params)
       .then(setResult)
       .finally(() => setLoading(false));
-  }, [page, search, statusFilter]);
+  }, [columnFilters, page, sorting]);
 
   useEffect(() => { fetchVendors(); }, [fetchVendors]);
 
@@ -281,96 +288,102 @@ export function VendorsPage() {
 
   const vendors = result?.items ?? [];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Vendors</h1>
-          <p className="text-muted-foreground">Manage vendor records</p>
-        </div>
-        <Button onClick={() => { setEditingVendor(undefined); setFormOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Vendor
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search by name or code…" className="pl-9" value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? ""); setPage(1); }}>
-          <SelectTrigger className="w-36"><SelectValue placeholder="All" /></SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Lead Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">Loading…</TableCell></TableRow>
-              ) : vendors.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No vendors found.</TableCell></TableRow>
-              ) : (
-                vendors.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.code}</TableCell>
-                    <TableCell>{v.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{v.contactPerson ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{v.city ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{v.leadTimeDays}d</TableCell>
-                    <TableCell>
-                      <Badge variant={v.isActive ? "default" : "secondary"}>{v.isActive ? "Active" : "Inactive"}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleActive(v)} title={v.isActive ? "Deactivate" : "Activate"}>
-                          {v.isActive ? <XCircle className="h-4 w-4 text-orange-500" /> : <CheckCircle className="h-4 w-4 text-green-600" />}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingVendor(v); setFormOpen(true); }} title="Edit">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(v)} title="Delete">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Showing {(result.page - 1) * result.pageSize + 1}–{Math.min(result.page * result.pageSize, result.totalCount)} of {result.totalCount}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={!result.hasPreviousPage} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-            <Button variant="outline" size="sm" disabled={!result.hasNextPage} onClick={() => setPage((p) => p + 1)}>Next</Button>
+  const columns: ColumnDef<Vendor>[] = [
+    {
+      accessorKey: "code",
+      header: "Code",
+      cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
+      meta: {
+        filterId: "searchTerm",
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterInput
+            value={value}
+            onChange={onChange}
+            placeholder="Search…"
+          />
+        ),
+      },
+    },
+    { accessorKey: "name", header: "Name" },
+    {
+      accessorKey: "contactPerson",
+      header: "Contact",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.contactPerson ?? "—"}</span>,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "city",
+      header: "City",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.city ?? "—"}</span>,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "leadTimeDays",
+      header: "Lead Time",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.leadTimeDays}d</span>,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge isActive={row.original.isActive} />,
+      enableSorting: false,
+      meta: {
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterSelect
+            value={value}
+            onChange={onChange}
+            options={STATUS_OPTIONS}
+            placeholder="All"
+          />
+        ),
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      meta: { className: "text-right", headerClassName: "text-right" },
+      cell: ({ row }) => {
+        const v = row.original;
+        return (
+          <div className="flex items-center justify-end gap-1">
+            <Button variant="ghost" size="sm" onClick={() => handleToggleActive(v)} title={v.isActive ? "Deactivate" : "Activate"}>
+              {v.isActive ? <XCircle className="h-4 w-4 text-orange-500" /> : <CheckCircle className="h-4 w-4 text-green-600" />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => { setEditingVendor(v); setFormOpen(true); }} title="Edit">
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(v)} title="Delete">
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
-        </div>
-      )}
+        );
+      },
+    },
+  ];
+
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Vendors"
+        description="Manage vendor records"
+        action={
+          <Button onClick={() => { setEditingVendor(undefined); setFormOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Add Vendor
+          </Button>
+        }
+      />
+
+      <DataTable
+        columns={columns}
+        data={vendors}
+        loading={loading}
+        emptyText="No vendors found."
+        filtering={{ state: columnFilters, onChange: handleFilteringChange, manual: true }}
+        sorting={{ state: sorting, onChange: handleSortingChange, manual: true }}
+        pagination={result ? { result, onPrevious: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) } : undefined}
+      />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -379,18 +392,14 @@ export function VendorsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Delete Vendor</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{deleteTarget?.name}</strong> ({deleteTarget?.code})? This action cannot be undone.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete"}</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <DeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Vendor"
+        entityLabel={deleteTarget ? `${deleteTarget.name} (${deleteTarget.code})` : ""}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
+    </PageLayout>
   );
 }

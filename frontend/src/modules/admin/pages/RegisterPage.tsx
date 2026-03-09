@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
-import { Label } from "@app/components/ui/label";
 import { useRegisterMutation } from "@modules/admin/hooks/useRegisterMutation";
+import { FormField, FormGrid } from "@shared/components";
 import { AlertTriangle, Lock, Mail, ArrowRight, User } from "lucide-react";
 import { parseApiError } from "@shared/lib/error-utils";
 import { AuthLayout } from "@app/components/layout/AuthLayout";
@@ -61,11 +61,8 @@ export function RegisterPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name Fields */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName" className="text-sm font-medium">
-              First name
-            </Label>
+        <FormGrid gap="4">
+          <FormField id="firstName" label="First name">
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -80,12 +77,9 @@ export function RegisterPage() {
                 maxLength={128}
               />
             </div>
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="lastName" className="text-sm font-medium">
-              Last name
-            </Label>
+          <FormField id="lastName" label="Last name">
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -100,14 +94,11 @@ export function RegisterPage() {
                 maxLength={128}
               />
             </div>
-          </div>
-        </div>
+          </FormField>
+        </FormGrid>
 
         {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">
-            Email address
-          </Label>
+        <FormField id="email" label="Email address">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -122,13 +113,10 @@ export function RegisterPage() {
               maxLength={256}
             />
           </div>
-        </div>
+        </FormField>
 
         {/* Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">
-            Password
-          </Label>
+        <FormField id="password" label="Password">
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -142,13 +130,10 @@ export function RegisterPage() {
               required
             />
           </div>
-        </div>
+        </FormField>
 
         {/* Confirm Password Field */}
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-sm font-medium">
-            Confirm password
-          </Label>
+        <FormField id="confirmPassword" label="Confirm password">
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -162,7 +147,7 @@ export function RegisterPage() {
               required
             />
           </div>
-        </div>
+        </FormField>
 
         {/* Password Requirements */}
         <div className="p-3 rounded-lg bg-muted/50 border text-xs text-muted-foreground">

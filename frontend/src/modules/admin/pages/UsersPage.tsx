@@ -1,17 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Search, Trash2, Edit, CheckCircle, MoreHorizontal } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/card";
+import type { ColumnDef, ColumnFiltersState, OnChangeFn, SortingState } from "@tanstack/react-table";
+import { Plus, Trash2, Edit, CheckCircle } from "lucide-react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Badge } from "@app/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@app/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +11,11 @@ import {
   DialogTitle,
 } from "@app/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/components/ui/select";
-import { Label } from "@app/components/ui/label";
+import {
+  PageHeader, DeleteDialog, FormError,
+  PageLayout, DataTable, FormField, FormGrid, FormActions,
+  ColumnFilterInput, ColumnFilterSelect,
+} from "@shared/components";
 import { getUsers, getRoles, createUser, updateUser, deleteUser, activateUser } from "../api/adminApi";
 import type { User, Role, CreateUserRequest, UpdateUserRequest, PagedResult } from "../types";
 
@@ -92,11 +88,10 @@ function UserForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <FormError error={error} />
 
       {!user && (
-        <div className="space-y-1">
-          <Label htmlFor="email">Email</Label>
+        <FormField id="email" label="Email">
           <Input
             id="email"
             type="email"
@@ -104,12 +99,11 @@ function UserForm({
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           />
-        </div>
+        </FormField>
       )}
 
       {!user && (
-        <div className="space-y-1">
-          <Label htmlFor="password">Password</Label>
+        <FormField id="password" label="Password">
           <Input
             id="password"
             type="password"
@@ -118,41 +112,37 @@ function UserForm({
             value={form.password}
             onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
           />
-        </div>
+        </FormField>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="firstName">First Name</Label>
+      <FormGrid>
+        <FormField id="firstName" label="First Name">
           <Input
             id="firstName"
             required
             value={form.firstName}
             onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
           />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="lastName">Last Name</Label>
+        </FormField>
+        <FormField id="lastName" label="Last Name">
           <Input
             id="lastName"
             required
             value={form.lastName}
             onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
           />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
-      <div className="space-y-1">
-        <Label htmlFor="phone">Phone</Label>
+      <FormField id="phone" label="Phone">
         <Input
           id="phone"
           value={form.phone}
           onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
         />
-      </div>
+      </FormField>
 
-      <div className="space-y-1">
-        <Label htmlFor="role">Role</Label>
+      <FormField id="role" label="Role">
         <Select value={form.roleId} onValueChange={(v) => setForm((f) => ({ ...f, roleId: v ?? "" }))}>  
           <SelectTrigger>
             <SelectValue placeholder="Select a role" />
@@ -165,16 +155,9 @@ function UserForm({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FormField>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={saving || !form.roleId}>
-          {saving ? "Saving…" : user ? "Update User" : "Create User"}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} saving={saving} disabled={!form.roleId} saveLabel={user ? "Update User" : "Create User"} />
     </form>
   );
 }
@@ -183,23 +166,56 @@ export function UsersPage() {
   const [result, setResult] = useState<PagedResult<User> | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const mapSortField = (columnId: string) => {
+    switch (columnId) {
+      case "email":
+        return "email";
+      case "fullName":
+        return "name";
+      default:
+        return columnId;
+    }
+  };
+
+  const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
+    setSorting((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next.slice(0, 1);
+    });
+  };
+
+  const handleFilteringChange: OnChangeFn<ColumnFiltersState> = (updater) => {
+    setColumnFilters((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      setPage(1);
+      return next;
+    });
+  };
+
   const fetchUsers = useCallback(() => {
+    const search = String(columnFilters.find((filter) => filter.id === "searchTerm")?.value ?? "");
+    const statusFilter = String(columnFilters.find((filter) => filter.id === "status")?.value ?? "");
     const params: Record<string, string> = { page: String(page), pageSize: "20" };
     if (search) params.searchTerm = search;
     if (statusFilter) params.status = statusFilter;
+    if (sorting[0]) {
+      params.sortBy = mapSortField(sorting[0].id);
+      params.sortDescending = String(sorting[0].desc);
+    }
     setLoading(true);
     getUsers(params)
       .then(setResult)
       .finally(() => setLoading(false));
-  }, [page, search, statusFilter]);
+  }, [columnFilters, page, sorting]);
 
   useEffect(() => {
     getRoles().then(setRoles).catch(() => {});
@@ -239,146 +255,104 @@ export function UsersPage() {
 
   const users = result?.items ?? [];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">Manage system users</p>
-        </div>
-        <Button onClick={() => { setEditingUser(undefined); setFormOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add User
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email…"
-            className="pl-9"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+  const columns: ColumnDef<User>[] = [
+    {
+      accessorKey: "fullName",
+      header: "Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.fullName}</span>,
+      meta: {
+        filterId: "searchTerm",
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterInput
+            value={value}
+            onChange={onChange}
+            placeholder="Search…"
           />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? ""); setPage(1); }}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                    Loading…
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                    No users found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((user) => {
-                  const statusInfo = STATUS_LABELS[user.status] ?? { label: user.statusName, variant: "outline" as const };
-                  return (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.fullName}</TableCell>
-                      <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                      <TableCell>{user.roleName}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : "Never"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {user.status !== 1 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleActivate(user)}
-                              title="Activate"
-                            >
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => { setEditingUser(user); setFormOpen(true); }}
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteTarget(user)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {result && result.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Showing {(result.page - 1) * result.pageSize + 1}–{Math.min(result.page * result.pageSize, result.totalCount)} of {result.totalCount}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!result.hasPreviousPage}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
+        ),
+      },
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span>,
+    },
+    { accessorKey: "roleName", header: "Role" },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusInfo = STATUS_LABELS[row.original.status] ?? { label: row.original.statusName, variant: "outline" as const };
+        return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+      },
+      enableSorting: false,
+      meta: {
+        filterComponent: ({ value, onChange }) => (
+          <ColumnFilterSelect
+            value={value}
+            onChange={onChange}
+            options={STATUS_OPTIONS}
+            placeholder="All Statuses"
+          />
+        ),
+      },
+    },
+    {
+      accessorKey: "lastLoginAt",
+      header: "Last Login",
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.lastLoginAt ? new Date(row.original.lastLoginAt).toLocaleDateString() : "Never"}
+        </span>
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      meta: { className: "text-right", headerClassName: "text-right" },
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex items-center justify-end gap-1">
+            {user.status !== 1 && (
+              <Button variant="ghost" size="sm" onClick={() => handleActivate(user)} title="Activate">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={() => { setEditingUser(user); setFormOpen(true); }} title="Edit">
+              <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!result.hasNextPage}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
+            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(user)} title="Delete">
+              <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
-        </div>
-      )}
+        );
+      },
+    },
+  ];
+
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Users"
+        description="Manage system users"
+        action={
+          <Button onClick={() => { setEditingUser(undefined); setFormOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Add User
+          </Button>
+        }
+      />
+
+      <DataTable
+        columns={columns}
+        data={users}
+        loading={loading}
+        emptyText="No users found."
+        filtering={{ state: columnFilters, onChange: handleFilteringChange, manual: true }}
+        sorting={{ state: sorting, onChange: handleSortingChange, manual: true }}
+        pagination={result ? { result, onPrevious: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) } : undefined}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -396,24 +370,14 @@ export function UsersPage() {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete <strong>{deleteTarget?.fullName}</strong>? This action cannot be undone.
-          </p>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting ? "Deleting…" : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+      <DeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete User"
+        entityLabel={deleteTarget?.fullName ?? ""}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
+    </PageLayout>
   );
 }

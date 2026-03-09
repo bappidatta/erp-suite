@@ -1,15 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@app/components/ui/card";
 import { useAuth } from "@shared/auth/auth-context";
+import { PageLayout, PageHeader } from "@shared/components";
 
 export function ProfilePage() {
   const { auth } = useAuth();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-muted-foreground">Your account information</p>
-      </div>
+    <PageLayout gap="6">
+      <PageHeader title="Profile" description="Your account information" />
 
       <Card>
         <CardHeader>
@@ -27,6 +25,6 @@ export function ProfilePage() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }
