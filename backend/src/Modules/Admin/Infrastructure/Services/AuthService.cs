@@ -82,6 +82,13 @@ public sealed class AuthService : IAuthService
         return _tokenService.CreateToken(authUser);
     }
 
+    public Task LogoutAsync(long userId, CancellationToken cancellationToken)
+    {
+        // JWT is currently stateless. Logout is handled on the client by clearing token state.
+        // This endpoint exists to preserve API contract and support future token revocation.
+        return Task.CompletedTask;
+    }
+
     private static string ResolveRole(User user)
     {
         return user.Email.Equals("admin@erpsuite.local", StringComparison.OrdinalIgnoreCase)

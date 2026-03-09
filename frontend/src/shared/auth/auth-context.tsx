@@ -105,7 +105,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function callLogoutEndpoint(currentAuth: AuthState): Promise<void> {
+    try {
+      await apiFetch<void>(
+        "/api/v1/auth/logout",
+        {
+          method: "POST"
+        },
+        currentAuth.token
+      );
+    } catch {
+      // Ignore logout API failures since client-side cleanup is the source of truth for session end.
+    }
+  }
+
   function logout(): void {
+    if (auth) {
+      void callLogoutEndpoint(auth);
+    }
+
     localStorage.removeItem(AUTH_STORAGE_KEY);
     setAuth(null);
   }
@@ -126,6 +144,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 30 * 1000);
 
     return () => clearInterval(timer);
+  }, [auth]);
+
+  useEffect(() => {
+    function handleAuthError(event: Event) {
+      const customEvent = event as CustomEvent<{ status: number; path: string }>;
+      const requestPath = customEvent.detail?.path ?? "";
+
+      // Do not force logout for explicit auth endpoint failures.
+      if (requestPath.startsWith("/api/v1/auth/login") || requestPath.startsWith("/api/v1/auth/register")) {
+        return;
+      }
+
+      if (auth) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        setAuth(null);
+      }
+    }
+
+    window.addEventListener("erp:auth-error", handleAuthError as EventListener);
+    return () => window.removeEventListener("erp:auth-error", handleAuthError as EventListener);
   }, [auth]);
 
   const value = useMemo<AuthContextValue>(

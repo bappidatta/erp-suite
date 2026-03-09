@@ -1,4 +1,5 @@
 using System.Text;
+using Api.Middleware;
 using ErpSuite.Modules.Admin.Application.Auth.Validators;
 using ErpSuite.Modules.Admin.Infrastructure;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
@@ -55,7 +56,11 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("AuthenticatedUser", policy => policy.RequireAuthenticatedUser());
+});
 builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
@@ -80,6 +85,7 @@ app.MapHealthChecks("/health");
 
 app.UseCors("frontend");
 app.UseSerilogRequestLogging();
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

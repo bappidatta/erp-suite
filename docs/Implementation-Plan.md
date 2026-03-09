@@ -91,6 +91,25 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 - Admin role can access all modules
 - Token refresh mechanism works
 
+### Sprint 0.3: Auth Hardening & Gap Closure (Extension)
+
+**Backend Tasks:**
+- [ ] Add explicit logout endpoint and contract
+- [ ] Introduce policy-based authorization definitions
+- [ ] Add tenant/company context middleware baseline
+- [ ] Keep admin authorization policy-driven (not only attribute-role literals)
+
+**Frontend Tasks:**
+- [ ] Add global 401/403 handling path for API responses
+- [ ] Ensure logout API call and local session cleanup are both handled
+- [ ] Resolve broken profile navigation path
+
+**Deliverables:**
+- Logout endpoint available and callable
+- Global 401/403 handling in place
+- Tenant context attached per request
+- Profile route works from header menu
+
 ---
 
 ## Phase 1: Core Platform & Master Data (Week 3-7)

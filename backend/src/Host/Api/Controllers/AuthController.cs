@@ -59,10 +59,24 @@ public sealed class AuthController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet("admin-access")]
     public IActionResult AdminAccess()
     {
         return Ok(new { message = "Admin access granted." });
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirst("user_id")?.Value;
+        if (!long.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized(new { message = "Invalid token." });
+        }
+
+        await _authService.LogoutAsync(userId, cancellationToken);
+        return NoContent();
     }
 }
