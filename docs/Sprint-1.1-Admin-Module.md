@@ -1,7 +1,22 @@
 # Sprint 1.1: Admin Module - User & Role Management
+
 **Duration:** 2 weeks (Week 3-4)  
 **Start Date:** March 9, 2026  
-**End Date:** March 22, 2026
+**End Date:** March 22, 2026  
+**Status:** 🟢 IN PROGRESS  
+**Velocity:** 20 points (estimated)
+
+---
+
+## Sprint Progress
+
+| Metric | Value |
+|--------|-------|
+| **Total Points** | 20 |
+| **Completed** | 3 (15%) |
+| **In Progress** | 0 |
+| **Not Started** | 17 (85%) |
+| **Est. Completion** | March 18, 2026 |
 
 ---
 
@@ -14,61 +29,119 @@
 
 ---
 
+## Key Decisions
+
+1. **User Entity Design**
+   - Inherited from `BaseAuditableEntity` for automatic audit fields and soft delete
+   - `UserStatus` enum instead of boolean `IsActive` — more flexible for future states
+   - Built-in account locking after 5 failed login attempts (15-minute lockout)
+   - Supports department & manager hierarchy via nullable foreign keys
+
+2. **Domain Events**
+   - Events are immutable record types inheriting `DomainEvent`
+   - Dispatched via repository after unit-of-work commit
+   - Enables event-driven communication with other modules
+
+3. **Unit Tests**
+   - All backend services must have accompanying unit tests
+   - Target 90%+ coverage for business logic methods
+
+---
+
 ## Backlog & Tasks
 
-### Backend: User Management (Medium Priority → Do First)
-#### Task 1.1.1: Extend User Entity
-- [ ] Add detailed fields to User (FirstName, LastName, Email, Phone, Status, Department, Manager)
-- [ ] Add soft delete support (IsDeleted, DeletedAt)
-- [ ] Add audit fields (CreatedBy, CreatedAt, ModifiedBy, ModifiedAt)
-- [ ] Create User domain events (UserCreated, UserUpdated, UserDeleted)
-- **File Location:** `backend/src/Modules/Admin/Domain/User.cs`
+### Backend: User Management
 
-#### Task 1.1.2: Create User CRUD Endpoints
-- [ ] GET /api/admin/users (list with pagination, search, filter)
-- [ ] GET /api/admin/users/{id} (detail)
-- [ ] POST /api/admin/users (create with validation)
-- [ ] PUT /api/admin/users/{id} (update)
-- [ ] DELETE /api/admin/users/{id} (soft delete)
-- [ ] POST /api/admin/users/{id}/activate (status change)
-- **File Location:** `backend/src/Modules/Admin/Presentation/UsersController.cs`
+#### ✅ Task 1.1.1: Extend User Entity — COMPLETE
+**Points:** 3 | **Commit:** `1647c3c` | **Completed:** March 9, 2026
 
-#### Task 1.1.3: User Validation & Business Rules
+- [x] Add detailed fields: Phone, DepartmentId, ManagerId, Status, LoginAttempts, LockedUntil
+- [x] Soft delete and audit fields inherited from `BaseAuditableEntity`
+- [x] `UserStatus` enum: Active, Inactive, Locked, Suspended
+- [x] Domain events: `UserCreatedEvent`, `UserUpdatedEvent`, `UserDeletedEvent`
+- [x] Behavioral methods: `UpdateProfile()`, `ChangeStatus()`, `RecordFailedLogin()`, `RecordSuccessfulLogin()`, `Activate()`, `Deactivate()`, `Lock()`, `Suspend()`
+- [x] Static factory: `User.Create(email, passwordHash, firstName, lastName, roleId, phone?, mustChangePassword?)`
+
+**Files Created:**
+- `backend/src/Modules/Admin/Domain/.../Entities/UserStatus.cs`
+- `backend/src/Modules/Admin/Domain/.../Events/UserCreatedEvent.cs`
+- `backend/src/Modules/Admin/Domain/.../Events/UserUpdatedEvent.cs`
+- `backend/src/Modules/Admin/Domain/.../Events/UserDeletedEvent.cs`
+
+**Files Modified:**
+- `backend/src/Modules/Admin/Domain/.../Entities/User.cs`
+
+---
+
+#### 🟡 Task 1.1.2: Create User CRUD Endpoints — NEXT
+**Points:** 5 | **Status:** Ready to Start | **Prerequisites:** ✅ Task 1.1.1
+
+- [ ] `IUserService` interface + `UserService` implementation
+- [ ] DTOs: `CreateUserRequest`, `UpdateUserRequest`, `UserResponse`, `UserListResponse`, `PagedResult<T>`
+- [ ] GET `/api/admin/users` (list with pagination, search, filter)
+- [ ] GET `/api/admin/users/{id}` (detail)
+- [ ] POST `/api/admin/users` (create with validation)
+- [ ] PUT `/api/admin/users/{id}` (update)
+- [ ] DELETE `/api/admin/users/{id}` (soft delete)
+- [ ] POST `/api/admin/users/{id}/activate` (status change)
+- [ ] **Unit tests** for `UserService` (create, duplicate email, self-delete guard, account locking)
+- **File Location:** `backend/src/Modules/Admin/Application/Users/`, `backend/src/Modules/Admin/Presentation/UsersController.cs`
+
+---
+
+#### 🔴 Task 1.1.3: User Validation & Business Rules — BLOCKED (on 1.1.2)
+**Points:** 3
+
 - [ ] Email uniqueness validation
 - [ ] First/Last name required
 - [ ] Role must exist before assignment
 - [ ] Prevent deleting current logged-in user
 - [ ] Department must exist
+- [ ] **Unit tests** for all validators
 - **File Location:** `backend/src/Modules/Admin/Application/Users/UsersValidator.cs`
 
-#### Task 1.1.4: User Query Service
+---
+
+#### 🔴 Task 1.1.4: User Query Service
+**Points:** 3
+
 - [ ] Search by name, email
 - [ ] Filter by department, status, role
 - [ ] Sort capability
 - [ ] Pagination (10, 20, 50 per page)
+- [ ] **Unit tests** for query/filter logic
 - **File Location:** `backend/src/Modules/Admin/Application/Users/UserQueryService.cs`
+
 
 ---
 
 ### Backend: Role & Permission Management
-#### Task 1.1.5: Role & Permission Entities
-- [ ] Role entity (RoleId, Name, Description, IsActive, CreatedAt, ModifiedAt)
-- [ ] Permission entity (PermissionId, Name, Module, Action, Description)
-- [ ] RolePermission join entity
-- [ ] UserRole join entity with CreatedAt, AssignedBy
+
+#### 🔴 Task 1.1.5: Role & Permission Entities
+**Points:** 5
+
+- [ ] Extend `Role.cs` to inherit from `BaseAuditableEntity` (currently `BaseEntity`)
+- [ ] `Permission` entity (PermissionId, Name, Module, Action, Description)
+- [ ] `RolePermission` join entity
+- [ ] `UserRole` join entity with AssignedAt, AssignedBy
 - **File Location:** `backend/src/Modules/Admin/Domain/`
 
-#### Task 1.1.6: Role CRUD Endpoints
-- [ ] GET /api/admin/roles (list)
-- [ ] GET /api/admin/roles/{id} (detail with permissions)
-- [ ] POST /api/admin/roles (create)
-- [ ] PUT /api/admin/roles/{id} (update)
-- [ ] DELETE /api/admin/roles/{id} (soft delete, prevent if users assigned)
-- [ ] POST /api/admin/roles/{id}/permissions (assign/update permissions)
-- [ ] GET /api/admin/roles/{id}/permissions (get assigned permissions)
+#### 🔴 Task 1.1.6: Role CRUD Endpoints
+**Points:** 5
+
+- [ ] GET `/api/admin/roles` (list)
+- [ ] GET `/api/admin/roles/{id}` (detail with permissions)
+- [ ] POST `/api/admin/roles` (create)
+- [ ] PUT `/api/admin/roles/{id}` (update)
+- [ ] DELETE `/api/admin/roles/{id}` (soft delete, prevent if users assigned)
+- [ ] POST `/api/admin/roles/{id}/permissions` (assign/update permissions)
+- [ ] GET `/api/admin/roles/{id}/permissions` (get assigned permissions)
+- [ ] **Unit tests** for `RoleService`
 - **File Location:** `backend/src/Modules/Admin/Presentation/RolesController.cs`
 
-#### Task 1.1.7: Permission Seeding
+#### 🔴 Task 1.1.7: Permission Seeding
+**Points:** 2
+
 - [ ] Create seed job for default permissions
 - [ ] Seed standard roles (Admin, Manager, User, Viewer)
 - [ ] Document permission structure
@@ -78,7 +151,10 @@
 ---
 
 ### Backend: Organization Settings
-#### Task 1.1.8: Organization Settings Entity
+
+#### 🔴 Task 1.1.8: Organization Settings Entity
+**Points:** 2
+
 - [ ] CompanyName, LegalName, RegistrationNumber
 - [ ] Address, Phone, Email, Website
 - [ ] Logo/Banner image storage path
@@ -87,150 +163,151 @@
 - [ ] Audit fields
 - **File Location:** `backend/src/Modules/Admin/Domain/OrganizationSettings.cs`
 
-#### Task 1.1.9: Organization Settings Endpoints
-- [ ] GET /api/admin/organization (current settings)
-- [ ] PUT /api/admin/organization (update - admin only)
-- [ ] POST /api/admin/organization/logo (upload image)
-- [ ] Validation: required fields, image size limit (5MB)
+#### 🔴 Task 1.1.9: Organization Settings Endpoints
+**Points:** 2
+
+- [ ] GET `/api/admin/organization` (current settings)
+- [ ] PUT `/api/admin/organization` (update — admin only)
+- [ ] POST `/api/admin/organization/logo` (upload image, 5MB limit)
+- [ ] **Unit tests** for settings service
 - **File Location:** `backend/src/Modules/Admin/Presentation/OrganizationController.cs`
 
 ---
 
 ### Backend: Admin Dashboard Data
-#### Task 1.1.10: Dashboard Queries
+
+#### 🔴 Task 1.1.10: Dashboard Queries
+**Points:** 2
+
 - [ ] Total user count (active/inactive/deleted)
 - [ ] Active role count
 - [ ] Last activity timestamp (from audit logs)
 - [ ] System health status
-- [ ] Endpoints: GET /api/admin/dashboard/stats
+- [ ] GET `/api/admin/dashboard/stats`
 - **File Location:** `backend/src/Modules/Admin/Application/Dashboard/DashboardQueryService.cs`
 
 ---
 
 ### Frontend: User Management UI
-#### Task 1.1.11: User List Screen
-- [ ] Table with columns: Name, Email, Department, Role, Status, Actions
+
+#### 🔴 Task 1.1.11: User List Screen
+**Points:** 3
+
+- [ ] Table: Name, Email, Department, Role, Status, Actions
 - [ ] Pagination (10, 20, 50 per page)
 - [ ] Search by name/email
 - [ ] Filter by department, status, role
 - [ ] Bulk status change checkbox
-- [ ] Create User button (bottom-right)
-- [ ] Edit/Delete icons per row
+- [ ] Create User button, Edit/Delete icons per row
 - **File Location:** `frontend/src/modules/admin/pages/UsersPage.tsx`
 
-#### Task 1.1.12: User Create/Edit Form
-- [ ] First Name (text, required)
-- [ ] Last Name (text, required)
-- [ ] Email (email, required, unique validation)
-- [ ] Phone (text, optional)
-- [ ] Department (dropdown, required)
-- [ ] Manager (searchable dropdown, optional)
-- [ ] Role (multi-select or single-select dropdown)
-- [ ] Status (Active/Inactive radio)
-- [ ] Submit & Cancel buttons
+#### 🔴 Task 1.1.12: User Create/Edit Form
+**Points:** 3
+
+- [ ] First Name, Last Name (required), Email (required, unique)
+- [ ] Phone (optional), Department (dropdown), Manager (searchable)
+- [ ] Role (dropdown), Status (Active/Inactive)
 - [ ] Form validation with error messages
 - [ ] Modal or slide-out dialog
 - **File Location:** `frontend/src/modules/admin/components/UserForm.tsx`
 
-#### Task 1.1.13: User Deletion Confirmation
+#### 🔴 Task 1.1.13: User Deletion Confirmation
+**Points:** 1
+
 - [ ] Confirmation modal for delete action
-- [ ] Warning message if user has active approvals/documents
+- [ ] Warning if user has active approvals/documents
 - [ ] Option to reassign documents to another user
 - **File Location:** `frontend/src/modules/admin/components/DeleteUserModal.tsx`
 
 ---
 
 ### Frontend: Role Management UI
-#### Task 1.1.14: Role List Screen
-- [ ] Table with columns: Name, Description, User Count, Permissions Count, Status, Actions
-- [ ] Create Role button
-- [ ] Edit/Delete icons
-- [ ] Quick view permissions (hover tooltip or click)
+
+#### 🔴 Task 1.1.14: Role List Screen
+**Points:** 2
+
+- [ ] Table: Name, Description, User Count, Permissions Count, Status, Actions
+- [ ] Create Role button, Edit/Delete icons, quick view permissions
 - **File Location:** `frontend/src/modules/admin/pages/RolesPage.tsx`
 
-#### Task 1.1.15: Role Create/Edit Form
-- [ ] Name (text, required, unique)
-- [ ] Description (textarea, optional)
-- [ ] Status (Active/Inactive)
-- [ ] Permissions section:
-  - [ ] Tree/expandable list by module
-  - [ ] Checkboxes for each permission
-  - [ ] Select All / Deselect All buttons per module
-- [ ] Submit & Cancel
+#### 🔴 Task 1.1.15: Role Create/Edit Form
+**Points:** 2
+
+- [ ] Name (required, unique), Description, Status
+- [ ] Permissions: tree by module, checkboxes, Select All per module
 - **File Location:** `frontend/src/modules/admin/components/RoleForm.tsx`
 
-#### Task 1.1.16: Permission Assignment to User
-- [ ] User detail page section: "Roles"
-- [ ] Show current roles with assignment date and assigned-by
-- [ ] Add role button
-- [ ] Remove role from modal
-- [ ] List available roles with filter
+#### 🔴 Task 1.1.16: Permission Assignment to User
+**Points:** 1
+
+- [ ] User detail page "Roles" section
+- [ ] Show current roles with assignment date/by, Add/Remove role
 - **File Location:** `frontend/src/modules/admin/components/UserRolesSection.tsx`
 
 ---
 
 ### Frontend: Organization Settings UI
-#### Task 1.1.17: Organization Settings Screen
-- [ ] Company name, legal name, registration number (text)
-- [ ] Address fields (street, city, state, postal code, country)
-- [ ] Phone, email, website (text)
+
+#### 🔴 Task 1.1.17: Organization Settings Screen
+**Points:** 2
+
+- [ ] Company name, legal name, registration number, address fields
 - [ ] Logo upload area (drag & drop, file picker)
-- [ ] Currency dropdown (USD, EUR, GBP, INR, etc.)
-- [ ] Fiscal year start/end (date pickers)
-- [ ] Date format, time zone (dropdowns)
-- [ ] System status (dropdown, admin view only)
+- [ ] Currency, fiscal year, date format, time zone dropdowns
 - [ ] Save button with success/error toast
 - **File Location:** `frontend/src/modules/admin/pages/OrganizationSettingsPage.tsx`
 
 ---
 
 ### Frontend: Admin Dashboard
-#### Task 1.1.18: Admin Dashboard Screen
-- [ ] Welcome card with user name
-- [ ] 4 stat cards:
-  - [ ] Active Users count
-  - [ ] Roles count
-  - [ ] Pending Approvals (stub for now)
-  - [ ] System Health
-- [ ] Quick links:
-  - [ ] Manage Users
-  - [ ] Manage Roles
-  - [ ] Organization Settings
-  - [ ] Audit Log
+
+#### 🔴 Task 1.1.18: Admin Dashboard Screen
+**Points:** 2
+
+- [ ] Welcome card, 4 stat cards (Active Users, Roles, Pending Approvals, System Health)
+- [ ] Quick links: Users, Roles, Organization Settings, Audit Log
 - [ ] Recent activity list (last 10 actions)
 - **File Location:** `frontend/src/modules/admin/pages/AdminDashboardPage.tsx`
 
 ---
 
 ### Backend: Audit & Logging
-#### Task 1.1.19: Audit Log Entity & Service
-- [ ] AuditLog entity (UserId, Action, Module, EntityId, OldValues, NewValues, Timestamp, IPAddress)
+
+#### 🔴 Task 1.1.19: Audit Log Entity & Service
+**Points:** 3
+
+- [ ] `AuditLog` entity (UserId, Action, Module, EntityId, OldValues, NewValues, Timestamp, IPAddress)
 - [ ] Automatic capture on Create/Update/Delete via interceptor
-- [ ] Endpoint: GET /api/admin/audit-logs (filterable by module, date range, user)
+- [ ] GET `/api/admin/audit-logs` (filterable by module, date range, user)
 - **File Location:** `backend/src/Modules/Admin/Infrastructure/Audit/`
 
-#### Task 1.1.20: Soft Delete Middleware
-- [ ] All queries auto-filter soft-deleted records
-- [ ] Admin can view deleted records (IsDeleted filter)
-- [ ] Restore endpoint: PATCH /api/admin/{resource}/{id}/restore
+#### 🔴 Task 1.1.20: Soft Delete Middleware
+**Points:** 1
+
+- [ ] All queries auto-filter soft-deleted records (via DbContext query filters)
+- [ ] Admin can view deleted records via flag
+- [ ] Restore endpoint: PATCH `/api/admin/{resource}/{id}/restore`
 - **File Location:** `backend/src/BuildingBlocks/Infrastructure/SoftDeleteQueryFilter.cs`
 
 ---
 
 ### Testing & Integration
-#### Task 1.1.21: Backend API Integration Tests
-- [ ] User CRUD operations
-- [ ] Role permission assignments
-- [ ] Permission validation
-- [ ] Soft delete behavior
-- [ ] Audit log capture
-- [ ] Test file: `backend/tests/Integration/Admin.Tests/`
 
-#### Task 1.1.22: Frontend Component Testing
-- [ ] User form validation
-- [ ] Table sorting/pagination
-- [ ] Search/filter functionality
-- [ ] Role assignment modal
+#### 🔴 Task 1.1.21: Backend Unit & Integration Tests
+**Points:** 3
+
+- [ ] User CRUD operations (unit tests for service layer)
+- [ ] Role permission assignment tests
+- [ ] Soft delete behavior tests
+- [ ] Audit log capture tests
+- [ ] Test project: `backend/tests/Unit/Admin.Tests/` and `backend/tests/Integration/Admin.Tests/`
+
+#### 🔴 Task 1.1.22: Frontend Component Testing
+**Points:** 1
+
+- [ ] User form validation tests
+- [ ] Table sorting/pagination tests
+- [ ] Search/filter functionality tests
 - [ ] Test file: `frontend/src/modules/admin/__tests__/`
 
 ---
@@ -290,21 +367,23 @@ For each task:
 
 ## Risks & Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Scope creep (adding more admin features) | Medium | Stick to CRUD + dashboard, defer advanced features |
-| Permission system too complex | Medium | Start with simple role-based, avoid attribute-based initially |
-| Performance with large user sets | Low | Add pagination, indexing on Email |
-| UI inconsistency across forms | Low | Use shared form components from shadcn |
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|-----------|
+| Scope creep (adding more admin features) | Medium | Low | Stick to CRUD + dashboard, defer advanced features |
+| Permission system too complex | Medium | Low | Start with simple role-based, avoid attribute-based initially |
+| Performance with large user sets | Low | Low | Add pagination, indexing on Email |
+| UI inconsistency across forms | Low | Low | Use shared form components from shadcn |
+| Soft delete query filtering issues | Medium | Low | Use DbContext query filters — already in BaseDbContext |
+| Account locking edge cases | Low | Low | Covered by unit tests for `RecordFailedLogin()` |
 
 ---
 
 ## Dependencies & Blockers
 
-- ✅ Authentication endpoints foundation (Phase 0.2) - COMPLETE
-- ✅ Database migrations infrastructure - COMPLETE
-- ✅ Object mapper / DTOs pattern - READY
-- 🔄 Role-based authorization policy middleware - IN PROGRESS (Phase 0.3)
+- ✅ Authentication endpoints foundation (Phase 0.2) — COMPLETE
+- ✅ Database migrations infrastructure — COMPLETE
+- ✅ Object mapper / DTOs pattern — READY
+- ✅ Role-based authorization policy middleware — COMPLETE (Phase 0.3)
 
 ---
 
@@ -324,6 +403,6 @@ By end of sprint:
 
 | Role | Tasks | Tracker |
 |------|-------|---------|
-| Backend Lead | 1.1.1-1.1.10, 1.1.19-1.1.20 | Sprint Backlog |
-| Frontend Lead | 1.1.11-1.1.18 | Sprint Backlog |
-| QA | 1.1.21-1.1.22 | Test Plan |
+| Backend Lead | 1.1.1–1.1.10, 1.1.19–1.1.20 | Sprint Backlog |
+| Frontend Lead | 1.1.11–1.1.18 | Sprint Backlog |
+| QA | 1.1.21–1.1.22 | Test Plan |
