@@ -1,4 +1,5 @@
 using ErpSuite.Modules.Admin.Application.Auth;
+using ErpSuite.Modules.Admin.Domain.Entities;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,7 +38,54 @@ public sealed class AuthService : IAuthService
         user.RecordLogin();
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim());
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
         return _tokenService.CreateToken(authUser);
+    }
+
+    public async Task<LoginResult?> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+        // Check if user already exists
+        var existingUser = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
+
+        if (existingUser is not null)
+        {
+            return null; // User already exists
+        }
+
+        // Hash password
+        var passwordHash = _passwordHasher.Hash(request.Password);
+
+        // Create new user
+        var user = User.Create(request.Email, passwordHash, request.FirstName, request.LastName);
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        // Generate token
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
+        return _tokenService.CreateToken(authUser);
+    }
+
+    public async Task<LoginResult?> RefreshAsync(long userId, CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+        if (user is null || !user.IsActive)
+        {
+            return null;
+        }
+
+        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), ResolveRole(user));
+        return _tokenService.CreateToken(authUser);
+    }
+
+    private static string ResolveRole(User user)
+    {
+        return user.Email.Equals("admin@erpsuite.local", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "User";
     }
 }

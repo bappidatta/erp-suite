@@ -2,21 +2,42 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/components/ui/card";
+import { Card, CardContent } from "@app/components/ui/card";
 import { Input } from "@app/components/ui/input";
 import { Label } from "@app/components/ui/label";
-import { useLoginMutation } from "@modules/admin/hooks/useLoginMutation";
-import { AlertTriangle, Lock, Mail, ArrowRight, Shield } from "lucide-react";
+import { useRegisterMutation } from "@modules/admin/hooks/useRegisterMutation";
+import { AlertTriangle, Lock, Mail, ArrowRight, Shield, User } from "lucide-react";
 
-export function LoginPage() {
-  const loginMutation = useLoginMutation();
+export function RegisterPage() {
+  const registerMutation = useRegisterMutation();
 
-  const [email, setEmail] = useState("admin@erpsuite.local");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    loginMutation.mutate({ email, password });
+    setPasswordError("");
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setPasswordError(
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character"
+      );
+      return;
+    }
+
+    registerMutation.mutate({ email, password, firstName, lastName });
   }
 
   return (
@@ -41,8 +62,7 @@ export function LoginPage() {
           
           <blockquote className="space-y-2 max-w-md">
             <p className="text-lg font-medium leading-relaxed">
-              "Streamline your business operations with our comprehensive ERP solution. 
-              Manage everything from finance to procurement in one powerful platform."
+              "Join thousands of businesses streamlining their operations with our comprehensive ERP solution."
             </p>
           </blockquote>
         </div>
@@ -82,7 +102,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Registration Form */}
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
@@ -98,16 +118,59 @@ export function LoginPage() {
 
           {/* Header */}
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Create an account</h2>
             <p className="text-muted-foreground">
-              Enter your credentials to access your account
+              Enter your details to get started
             </p>
           </div>
 
           {/* Form Card */}
           <Card className="border-2">
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-sm font-medium">
+                      First name
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="firstName"
+                        type="text"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        autoComplete="given-name"
+                        placeholder="John"
+                        className="pl-10 h-11"
+                        required
+                        maxLength={128}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium">
+                      Last name
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="lastName"
+                        type="text"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                        autoComplete="family-name"
+                        placeholder="Doe"
+                        className="pl-10 h-11"
+                        required
+                        maxLength={128}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
@@ -120,28 +183,20 @@ export function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      autoComplete="username"
-                      placeholder="admin@erpsuite.local"
+                      autoComplete="email"
+                      placeholder="john.doe@example.com"
                       className="pl-10 h-11"
                       required
+                      maxLength={256}
                     />
                   </div>
                 </div>
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium">
-                      Password
-                    </Label>
-                    <button
-                      type="button"
-                      className="text-sm text-primary hover:underline"
-                      onClick={() => alert("Password reset functionality coming soon")}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Password
+                  </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -149,22 +204,60 @@ export function LoginPage() {
                       type="password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      autoComplete="current-password"
-                      placeholder="Enter your password"
+                      autoComplete="new-password"
+                      placeholder="Create a password"
                       className="pl-10 h-11"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Error Alert */}
-                {loginMutation.error && (
+                {/* Confirm Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                    Confirm password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      autoComplete="new-password"
+                      placeholder="Confirm your password"
+                      className="pl-10 h-11"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Password Requirements */}
+                <div className="p-3 rounded-lg bg-muted/50 border text-xs text-muted-foreground">
+                  Password must contain:
+                  <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase and one lowercase letter</li>
+                    <li>One number</li>
+                    <li>One special character (@$!%*?&#)</li>
+                  </ul>
+                </div>
+
+                {/* Error Alerts */}
+                {passwordError && (
+                  <Alert variant="destructive" className="border-destructive/50">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{passwordError}</AlertDescription>
+                  </Alert>
+                )}
+                
+                {registerMutation.error && (
                   <Alert variant="destructive" className="border-destructive/50">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      {loginMutation.error instanceof Error 
-                        ? loginMutation.error.message 
-                        : "Invalid credentials or API is not reachable."}
+                      {registerMutation.error instanceof Error 
+                        ? registerMutation.error.message 
+                        : "Registration failed. Please try again."}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -173,41 +266,32 @@ export function LoginPage() {
                 <Button
                   type="submit"
                   className="w-full h-11 text-base font-medium"
-                  disabled={loginMutation.isPending}
+                  disabled={registerMutation.isPending}
                 >
-                  {loginMutation.isPending ? (
+                  {registerMutation.isPending ? (
                     <>
                       <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Signing in...
+                      Creating account...
                     </>
                   ) : (
                     <>
-                      Sign in
+                      Create account
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
               </form>
-
-              {/* Demo Credentials Notice */}
-              <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
-                <p className="text-xs text-center text-muted-foreground">
-                  <strong className="font-semibold text-foreground">Demo Credentials:</strong>
-                  <br />
-                  Email: admin@erpsuite.local • Password: Admin@123
-                </p>
-              </div>
             </CardContent>
           </Card>
 
           {/* Footer Links */}
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              to="/register"
+              to="/login"
               className="text-primary font-medium hover:underline"
             >
-              Create an account
+              Sign in
             </Link>
           </p>
         </div>
