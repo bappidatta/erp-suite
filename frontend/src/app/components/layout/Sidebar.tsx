@@ -28,9 +28,11 @@ const navItems = [
     label: "Admin",
     icon: Users,
     submenu: [
+      { label: "Overview", href: "/admin" },
       { label: "Users", href: "/admin/users" },
       { label: "Roles", href: "/admin/roles" },
-      { label: "Companies", href: "/admin/companies" },
+      { label: "Organization", href: "/admin/organization" },
+      { label: "Audit Log", href: "/admin/audit-log" },
     ],
   },
   {

@@ -68,6 +68,8 @@ public class User : BaseAuditableEntity
     public void Lock() => Status = UserStatus.Locked;
     public void Suspend() => Status = UserStatus.Suspended;
 
+    public void AssignRole(long roleId) => RoleId = roleId;
+
     public void RecordFailedLogin()
     {
         LoginAttempts++;

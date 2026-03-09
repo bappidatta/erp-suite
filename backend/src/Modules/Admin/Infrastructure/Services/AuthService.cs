@@ -2,6 +2,7 @@ using ErpSuite.Modules.Admin.Application.Auth;
 using ErpSuite.Modules.Admin.Domain.Entities;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ErpSuite.Modules.Admin.Infrastructure.Services;
 
@@ -11,17 +12,20 @@ public sealed class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
     private readonly ITokenRevocationService _tokenRevocationService;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         ErpDbContext dbContext,
         IPasswordHasher passwordHasher,
         ITokenService tokenService,
-        ITokenRevocationService tokenRevocationService)
+        ITokenRevocationService tokenRevocationService,
+        ILogger<AuthService> logger)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
         _tokenRevocationService = tokenRevocationService;
+        _logger = logger;
     }
 
     public async Task<LoginResult?> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -32,17 +36,25 @@ public sealed class AuthService : IAuthService
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
 
-        if (user is null || !user.IsActive)
+        if (user is null || user.Status == UserStatus.Inactive || user.Status == UserStatus.Suspended)
         {
+            return null;
+        }
+
+        if (user.Status == UserStatus.Locked && user.LockedUntil > DateTime.UtcNow)
+        {
+            _logger.LogWarning("Login attempt for locked account: {Email}", request.Email);
             return null;
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
+            user.RecordFailedLogin();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return null;
         }
 
-        user.RecordLogin();
+        user.RecordSuccessfulLogin();
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), user.Role.Name);
@@ -85,7 +97,7 @@ public sealed class AuthService : IAuthService
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        if (user is null || !user.IsActive)
+        if (user is null || user.Status is UserStatus.Inactive or UserStatus.Suspended)
         {
             return null;
         }

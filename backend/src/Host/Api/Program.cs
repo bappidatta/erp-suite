@@ -1,6 +1,7 @@
 using System.Text;
 using Api.Middleware;
 using ErpSuite.Modules.Admin.Application.Auth.Validators;
+using ErpSuite.Modules.Admin.Application.Users.Validators;
 using ErpSuite.Modules.Admin.Infrastructure;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
 using ErpSuite.Modules.Admin.Infrastructure.Services;
@@ -31,6 +32,7 @@ builder.Services.AddAdminInfrastructure();
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
 
 builder.Services.AddCors(options =>
 {

@@ -24,14 +24,15 @@ public sealed class AdminDataSeeder
         // Seed roles if not present
         if (!await _dbContext.Roles.AnyAsync(cancellationToken))
         {
-            var adminRole = Role.Create("Admin", "Full system administrator");
-            var userRole = Role.Create("User", "Standard user");
+            var adminRole = Role.Create("Admin", "Full system administrator", isSystem: true);
+            var managerRole = Role.Create("Manager", "Department manager", isSystem: true);
+            var userRole = Role.Create("User", "Standard user", isSystem: true);
+            var viewerRole = Role.Create("Viewer", "Read-only access", isSystem: true);
 
-            _dbContext.Roles.Add(adminRole);
-            _dbContext.Roles.Add(userRole);
+            _dbContext.Roles.AddRange(adminRole, managerRole, userRole, viewerRole);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Seeded default roles: Admin, User");
+            _logger.LogInformation("Seeded default roles: Admin, Manager, User, Viewer");
         }
 
         if (await _dbContext.Users.AnyAsync(cancellationToken))

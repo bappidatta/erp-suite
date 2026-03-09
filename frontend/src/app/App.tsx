@@ -4,6 +4,11 @@ import { ProtectedRoute } from "@app/ProtectedRoute";
 import { LoginPage } from "@modules/admin/pages/LoginPage";
 import { ProfilePage } from "@modules/admin/pages/ProfilePage";
 import { RegisterPage } from "@modules/admin/pages/RegisterPage";
+import { AdminDashboardPage } from "@modules/admin/pages/AdminDashboardPage";
+import { UsersPage } from "@modules/admin/pages/UsersPage";
+import { RolesPage } from "@modules/admin/pages/RolesPage";
+import { OrganizationSettingsPage } from "@modules/admin/pages/OrganizationSettingsPage";
+import { AuditLogPage } from "@modules/admin/pages/AuditLogPage";
 
 export function App() {
   return (
@@ -15,6 +20,11 @@ export function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<UsersPage />} />
+        <Route path="/admin/roles" element={<RolesPage />} />
+        <Route path="/admin/organization" element={<OrganizationSettingsPage />} />
+        <Route path="/admin/audit-log" element={<AuditLogPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
