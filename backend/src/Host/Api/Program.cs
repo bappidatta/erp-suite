@@ -11,8 +11,8 @@ using ErpSuite.Modules.Admin.Infrastructure.Services;
 using ErpSuite.Modules.Sales.Infrastructure;
 using ErpSuite.Modules.Procurement.Infrastructure;
 using ErpSuite.Modules.Finance.Infrastructure;
+using Api.Endpoints;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -39,7 +39,6 @@ builder.Services.AddProcurementInfrastructure();
 builder.Services.AddFinanceInfrastructure();
 
 // Add FluentValidation
-builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
@@ -91,7 +90,6 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddHealthChecks();
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi("v1");
 
@@ -118,6 +116,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseMiddleware<TenantContextMiddleware>();
-app.MapControllers();
+app.MapApiEndpoints();
 
 app.Run();
