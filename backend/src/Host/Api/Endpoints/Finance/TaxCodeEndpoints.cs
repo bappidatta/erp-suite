@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Finance.Application.TaxCodes;
 using ErpSuite.Modules.Finance.Application.TaxCodes.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Api.Filters;
 
 namespace Api.Endpoints.Finance;

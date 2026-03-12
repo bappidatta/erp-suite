@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Admin.Application.Dashboard;
 using ErpSuite.Modules.Admin.Application.Dashboard.Dtos;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Endpoints.Admin;
 

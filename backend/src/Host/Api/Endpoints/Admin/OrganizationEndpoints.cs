@@ -6,6 +6,8 @@ namespace Api.Endpoints.Admin;
 
 public static class OrganizationEndpoints
 {
+    private const long MaxLogoSizeBytes = 5 * 1024 * 1024;
+
     public static IEndpointRouteBuilder MapOrganizationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("api/admin/organization")
@@ -44,7 +46,7 @@ public static class OrganizationEndpoints
         if (file is null || file.Length == 0)
             return Results.BadRequest(new { message = "No file provided." });
 
-        if (file.Length > 5 * 1024 * 1024)
+        if (file.Length > MaxLogoSizeBytes)
             return Results.BadRequest(new { message = "File size exceeds the 5MB limit." });
 
         var currentUserId = httpContext.User.FindFirst("user_id")?.Value ?? "system";

@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Finance.Application.Accounts;
 using ErpSuite.Modules.Finance.Application.Accounts.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Api.Filters;
 
 namespace Api.Endpoints.Finance;

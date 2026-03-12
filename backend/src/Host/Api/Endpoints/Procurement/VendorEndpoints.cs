@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Procurement.Application.Vendors;
 using ErpSuite.Modules.Procurement.Application.Vendors.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Api.Filters;
 
 namespace Api.Endpoints.Procurement;

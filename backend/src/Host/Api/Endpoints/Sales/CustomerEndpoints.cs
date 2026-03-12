@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Sales.Application.Customers;
 using ErpSuite.Modules.Sales.Application.Customers.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Api.Filters;
 
 namespace Api.Endpoints.Sales;

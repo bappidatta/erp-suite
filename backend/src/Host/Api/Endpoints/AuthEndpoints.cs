@@ -40,7 +40,7 @@ public static class AuthEndpoints
         var result = await authService.LoginAsync(request, cancellationToken);
         if (result is null)
         {
-            return Results.Unauthorized();
+            return Results.Json(new { message = "Invalid email or password." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         SetTokenCookie(httpContext, result.AccessToken, result.ExpiresAtUtc);
@@ -64,13 +64,13 @@ public static class AuthEndpoints
         var userIdClaim = httpContext.User.FindFirst("user_id")?.Value;
         if (!long.TryParse(userIdClaim, out var userId))
         {
-            return Results.Unauthorized();
+            return Results.Json(new { message = "Invalid token." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         var result = await authService.RefreshAsync(userId, cancellationToken);
         if (result is null)
         {
-            return Results.Unauthorized();
+            return Results.Json(new { message = "User not found or inactive." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         SetTokenCookie(httpContext, result.AccessToken, result.ExpiresAtUtc);
@@ -86,7 +86,7 @@ public static class AuthEndpoints
 
         if (!long.TryParse(userIdClaim, out var userId) || emailClaim is null)
         {
-            return Results.Unauthorized();
+            return Results.Json(new { message = "Invalid token." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         var authUser = new AuthUser(userId, emailClaim, nameClaim ?? "", roleClaim ?? "User");
@@ -103,7 +103,7 @@ public static class AuthEndpoints
         var userIdClaim = httpContext.User.FindFirst("user_id")?.Value;
         if (!long.TryParse(userIdClaim, out var userId))
         {
-            return Results.Unauthorized();
+            return Results.Json(new { message = "Invalid token." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         var jti = httpContext.User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;

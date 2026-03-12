@@ -1,6 +1,5 @@
 using ErpSuite.Modules.Admin.Application.Users;
 using ErpSuite.Modules.Admin.Application.Users.Dtos;
-using Microsoft.AspNetCore.Mvc;
 using Api.Filters;
 
 namespace Api.Endpoints.Admin;
