@@ -1,6 +1,7 @@
 using ErpSuite.Modules.Admin.Application.Organization;
 using ErpSuite.Modules.Admin.Application.Organization.Dtos;
 using Api.Filters;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Api.Endpoints.Admin;
 
@@ -20,7 +21,8 @@ public static class OrganizationEndpoints
             .AddEndpointFilter<ValidationFilter<UpdateOrganizationSettingsRequest>>();
 
         group.MapPost("logo", UploadLogo)
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .WithMetadata(new RequestSizeLimitAttribute(MaxLogoSizeBytes));
 
         return app;
     }
