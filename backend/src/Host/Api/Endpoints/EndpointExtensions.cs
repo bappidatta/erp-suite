@@ -1,5 +1,7 @@
 using Api.Endpoints.Admin;
 using Api.Endpoints.Finance;
+using Api.Endpoints.HR;
+using Api.Endpoints.Inventory;
 using Api.Endpoints.Procurement;
 using Api.Endpoints.Sales;
 
@@ -18,6 +20,12 @@ public static class EndpointExtensions
         app.MapTaxCodeEndpoints();
         app.MapCustomerEndpoints();
         app.MapVendorEndpoints();
+        app.MapCategoryEndpoints();
+        app.MapUomEndpoints();
+        app.MapWarehouseEndpoints();
+        app.MapItemEndpoints();
+        app.MapDepartmentEndpoints();
+        app.MapEmployeeEndpoints();
 
         return app;
     }

@@ -7,6 +7,8 @@
     <ProjectReference Include="..\..\Sales\Domain\ErpSuite.Modules.Sales.Domain.csproj" />
     <ProjectReference Include="..\..\Procurement\Domain\ErpSuite.Modules.Procurement.Domain.csproj" />
     <ProjectReference Include="..\..\Finance\Domain\ErpSuite.Modules.Finance.Domain.csproj" />
+    <ProjectReference Include="..\..\Inventory\Domain\ErpSuite.Modules.Inventory.Domain.csproj" />
+    <ProjectReference Include="..\..\HR\Domain\ErpSuite.Modules.HR.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

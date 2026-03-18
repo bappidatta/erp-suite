@@ -5,12 +5,16 @@ using ErpSuite.Modules.Admin.Application.Users.Validators;
 using ErpSuite.Modules.Sales.Application.Customers.Validators;
 using ErpSuite.Modules.Procurement.Application.Vendors.Validators;
 using ErpSuite.Modules.Finance.Application.TaxCodes.Validators;
+using ErpSuite.Modules.Inventory.Application.Categories.Validators;
+using ErpSuite.Modules.HR.Application.Departments.Validators;
 using ErpSuite.Modules.Admin.Infrastructure;
 using ErpSuite.Modules.Admin.Infrastructure.Persistence;
 using ErpSuite.Modules.Admin.Infrastructure.Services;
 using ErpSuite.Modules.Sales.Infrastructure;
 using ErpSuite.Modules.Procurement.Infrastructure;
 using ErpSuite.Modules.Finance.Infrastructure;
+using ErpSuite.Modules.Inventory.Infrastructure;
+using ErpSuite.Modules.HR.Infrastructure;
 using Api.Endpoints;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -37,6 +41,8 @@ builder.Services.AddAdminInfrastructure();
 builder.Services.AddSalesInfrastructure();
 builder.Services.AddProcurementInfrastructure();
 builder.Services.AddFinanceInfrastructure();
+builder.Services.AddInventoryInfrastructure();
+builder.Services.AddHrInfrastructure();
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -44,6 +50,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateVendorRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateTaxCodeRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateDepartmentRequestValidator>();
 
 builder.Services.AddCors(options =>
 {

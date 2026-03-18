@@ -3,6 +3,8 @@ using ErpSuite.Modules.Admin.Domain.Entities;
 using ErpSuite.Modules.Sales.Domain.Entities;
 using ErpSuite.Modules.Procurement.Domain.Entities;
 using ErpSuite.Modules.Finance.Domain.Entities;
+using ErpSuite.Modules.Inventory.Domain.Entities;
+using ErpSuite.Modules.HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ErpSuite.Modules.Admin.Infrastructure.Persistence;
@@ -32,6 +34,16 @@ public class ErpDbContext : BaseDbContext
     // Finance
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<Account> Accounts => Set<Account>();
+
+    // Inventory
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<Item> Items => Set<Item>();
+
+    // HR
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Employee> Employees => Set<Employee>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -299,6 +311,136 @@ public class ErpDbContext : BaseDbContext
             entity.HasOne(e => e.Parent)
                 .WithMany(e => e.Children)
                 .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Inventory Entities ──
+
+        // Configure Category entity
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.ToTable("categories");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.ParentCategoryId).HasColumnName("parent_category_id");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.Name);
+        });
+
+        // Configure UnitOfMeasure entity
+        modelBuilder.Entity<UnitOfMeasure>(entity =>
+        {
+            entity.ToTable("units_of_measure");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(256);
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        // Configure Warehouse entity
+        modelBuilder.Entity<Warehouse>(entity =>
+        {
+            entity.ToTable("warehouses");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Location).HasColumnName("location").HasMaxLength(256);
+            entity.Property(e => e.Address).HasColumnName("address").HasMaxLength(500);
+            entity.Property(e => e.ContactPerson).HasColumnName("contact_person").HasMaxLength(256);
+            entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(50);
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(1000);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        // Configure Item entity
+        modelBuilder.Entity<Item>(entity =>
+        {
+            entity.ToTable("items");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(1000);
+            entity.Property(e => e.CategoryId).HasColumnName("category_id");
+            entity.Property(e => e.UomId).HasColumnName("uom_id");
+            entity.Property(e => e.Type).HasColumnName("type").HasConversion<int>().HasDefaultValue(ItemType.Product);
+            entity.Property(e => e.ValuationMethod).HasColumnName("valuation_method").HasConversion<int>().HasDefaultValue(ValuationMethod.WeightedAverage);
+            entity.Property(e => e.StandardCost).HasColumnName("standard_cost").HasPrecision(18, 4);
+            entity.Property(e => e.SalePrice).HasColumnName("sale_price").HasPrecision(18, 4);
+            entity.Property(e => e.ReorderLevel).HasColumnName("reorder_level").HasPrecision(18, 4);
+            entity.Property(e => e.Barcode).HasColumnName("barcode").HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(2000);
+            entity.Property(e => e.ImagePath).HasColumnName("image_path").HasMaxLength(512);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.Name);
+
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Uom)
+                .WithMany()
+                .HasForeignKey(e => e.UomId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── HR Entities ──
+
+        // Configure Department entity
+        modelBuilder.Entity<Department>(entity =>
+        {
+            entity.ToTable("departments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.ParentDepartmentId).HasColumnName("parent_department_id");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        // Configure Employee entity
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.ToTable("employees");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.EmployeeNumber).HasColumnName("employee_number").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.FirstName).HasColumnName("first_name").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.LastName).HasColumnName("last_name").HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(256);
+            entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(50);
+            entity.Property(e => e.DepartmentId).HasColumnName("department_id");
+            entity.Property(e => e.Designation).HasColumnName("designation").HasMaxLength(256);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<int>().HasDefaultValue(EmploymentStatus.Active);
+            entity.Property(e => e.EmploymentType).HasColumnName("employment_type").HasConversion<int>().HasDefaultValue(EmploymentType.FullTime);
+            entity.Property(e => e.DateOfJoining).HasColumnName("date_of_joining");
+            entity.Property(e => e.DateOfBirth).HasColumnName("date_of_birth");
+            entity.Property(e => e.ManagerId).HasColumnName("manager_id");
+            entity.Property(e => e.Notes).HasColumnName("notes").HasMaxLength(2000);
+
+            entity.HasIndex(e => e.EmployeeNumber).IsUnique();
+
+            entity.HasOne(e => e.Department)
+                .WithMany()
+                .HasForeignKey(e => e.DepartmentId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

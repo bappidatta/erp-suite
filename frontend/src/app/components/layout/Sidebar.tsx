@@ -12,6 +12,7 @@ import {
   Package,
   DollarSign,
   Truck,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@app/lib/utils";
 import { Button } from "@app/components/ui/button";
@@ -63,9 +64,18 @@ const navItems = [
     label: "Inventory",
     icon: Package,
     submenu: [
-      { label: "Products", href: "/inventory/products" },
+      { label: "Categories", href: "/inventory/categories" },
+      { label: "Units of Measure", href: "/inventory/uoms" },
       { label: "Warehouses", href: "/inventory/warehouses" },
-      { label: "Stock", href: "/inventory/stock" },
+      { label: "Items", href: "/inventory/items" },
+    ],
+  },
+  {
+    label: "HR",
+    icon: Briefcase,
+    submenu: [
+      { label: "Departments", href: "/hr/departments" },
+      { label: "Employees", href: "/hr/employees" },
     ],
   },
 ];

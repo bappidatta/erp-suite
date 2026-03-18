@@ -13,6 +13,12 @@ import { CustomersPage } from "@modules/sales/pages/CustomersPage";
 import { VendorsPage } from "@modules/procurement/pages/VendorsPage";
 import { TaxCodesPage } from "@modules/finance/pages/TaxCodesPage";
 import { ChartOfAccountsPage } from "@modules/finance/pages/ChartOfAccountsPage";
+import { CategoriesPage } from "@modules/inventory/pages/CategoriesPage";
+import { UomsPage } from "@modules/inventory/pages/UomsPage";
+import { WarehousesPage } from "@modules/inventory/pages/WarehousesPage";
+import { ItemsPage } from "@modules/inventory/pages/ItemsPage";
+import { DepartmentsPage } from "@modules/hr/pages/DepartmentsPage";
+import { EmployeesPage } from "@modules/hr/pages/EmployeesPage";
 
 export function App() {
   return (
@@ -33,6 +39,12 @@ export function App() {
         <Route path="/procurement/vendors" element={<VendorsPage />} />
         <Route path="/finance/tax-codes" element={<TaxCodesPage />} />
         <Route path="/finance/accounts" element={<ChartOfAccountsPage />} />
+        <Route path="/inventory/categories" element={<CategoriesPage />} />
+        <Route path="/inventory/uoms" element={<UomsPage />} />
+        <Route path="/inventory/warehouses" element={<WarehousesPage />} />
+        <Route path="/inventory/items" element={<ItemsPage />} />
+        <Route path="/hr/departments" element={<DepartmentsPage />} />
+        <Route path="/hr/employees" element={<EmployeesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

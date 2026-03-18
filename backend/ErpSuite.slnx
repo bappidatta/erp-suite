@@ -60,6 +60,26 @@
   <Folder Name="/src/Modules/Finance/Infrastructure/">
     <Project Path="src/Modules/Finance/Infrastructure/ErpSuite.Modules.Finance.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Inventory/" />
+  <Folder Name="/src/Modules/Inventory/Domain/">
+    <Project Path="src/Modules/Inventory/Domain/ErpSuite.Modules.Inventory.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inventory/Application/">
+    <Project Path="src/Modules/Inventory/Application/ErpSuite.Modules.Inventory.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Inventory/Infrastructure/">
+    <Project Path="src/Modules/Inventory/Infrastructure/ErpSuite.Modules.Inventory.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/HR/" />
+  <Folder Name="/src/Modules/HR/Domain/">
+    <Project Path="src/Modules/HR/Domain/ErpSuite.Modules.HR.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/HR/Application/">
+    <Project Path="src/Modules/HR/Application/ErpSuite.Modules.HR.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/HR/Infrastructure/">
+    <Project Path="src/Modules/HR/Infrastructure/ErpSuite.Modules.HR.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Unit/">
     <Project Path="tests/Unit/ErpSuite.Tests.Unit/ErpSuite.Tests.Unit.csproj" />
