@@ -44,6 +44,9 @@ export const deleteUser = (id: number) =>
 export const activateUser = (id: number) =>
   apiFetch<{ message: string }>(`${ADMIN}/users/${id}/activate`, { method: "POST" });
 
+export const deactivateUser = (id: number) =>
+  apiFetch<{ message: string }>(`${ADMIN}/users/${id}/deactivate`, { method: "POST" });
+
 // Roles
 export const getRoles = () => apiFetch<Role[]>(`${ADMIN}/roles`);
 

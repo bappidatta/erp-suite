@@ -16,6 +16,7 @@ public sealed class RoleService : IRoleService
     public async Task<IReadOnlyList<RoleResponse>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
         var roles = await _dbContext.Roles
+            .AsNoTracking()
             .Include(r => r.Users)
             .Include(r => r.RolePermissions)
             .ToListAsync(cancellationToken);
@@ -31,6 +32,7 @@ public sealed class RoleService : IRoleService
     public async Task<RoleDetailResponse?> GetRoleByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         var role = await _dbContext.Roles
+            .AsNoTracking()
             .Include(r => r.Users)
             .Include(r => r.RolePermissions).ThenInclude(rp => rp.Permission)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -49,10 +51,12 @@ public sealed class RoleService : IRoleService
 
     public async Task<Result<RoleResponse>> CreateRoleAsync(CreateRoleRequest request, string currentUserId, CancellationToken cancellationToken = default)
     {
-        if (await _dbContext.Roles.AnyAsync(r => r.Name == request.Name, cancellationToken))
+        var normalizedName = request.Name.Trim();
+
+        if (await _dbContext.Roles.AnyAsync(r => r.Name.ToLower() == normalizedName.ToLower(), cancellationToken))
             return Result.Failure<RoleResponse>("A role with this name already exists.");
 
-        var role = Role.Create(request.Name, request.Description);
+        var role = Role.Create(normalizedName, request.Description?.Trim());
         role.SetAudit(currentUserId);
         _dbContext.Roles.Add(role);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -62,6 +66,8 @@ public sealed class RoleService : IRoleService
 
     public async Task<Result<RoleResponse>> UpdateRoleAsync(long id, UpdateRoleRequest request, string currentUserId, CancellationToken cancellationToken = default)
     {
+        var normalizedName = request.Name.Trim();
+
         var role = await _dbContext.Roles
             .Include(r => r.Users)
             .Include(r => r.RolePermissions)
@@ -70,10 +76,10 @@ public sealed class RoleService : IRoleService
         if (role is null) return Result.Failure<RoleResponse>("Role not found.");
         if (role.IsSystem) return Result.Failure<RoleResponse>("System roles cannot be modified.");
 
-        if (await _dbContext.Roles.AnyAsync(r => r.Name == request.Name && r.Id != id, cancellationToken))
+        if (await _dbContext.Roles.AnyAsync(r => r.Name.ToLower() == normalizedName.ToLower() && r.Id != id, cancellationToken))
             return Result.Failure<RoleResponse>("A role with this name already exists.");
 
-        role.Update(request.Name, request.Description);
+        role.Update(normalizedName, request.Description?.Trim());
         role.SetAudit(currentUserId);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -81,7 +87,7 @@ public sealed class RoleService : IRoleService
             role.Users.Count, role.RolePermissions.Count, role.IsSystem, role.CreatedAt));
     }
 
-    public async Task<Result> DeleteRoleAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteRoleAsync(long id, string currentUserId, CancellationToken cancellationToken = default)
     {
         var role = await _dbContext.Roles
             .Include(r => r.Users)
@@ -91,15 +97,26 @@ public sealed class RoleService : IRoleService
         if (role.IsSystem) return Result.Failure("System roles cannot be deleted.");
         if (role.Users.Count > 0) return Result.Failure("Cannot delete a role that has users assigned to it.");
 
-        role.SoftDelete("system");
+        role.SoftDelete(currentUserId);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 
-    public async Task<Result> AssignPermissionsAsync(long roleId, AssignPermissionsRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result> AssignPermissionsAsync(long roleId, AssignPermissionsRequest request, string currentUserId, CancellationToken cancellationToken = default)
     {
-        if (!await _dbContext.Roles.AnyAsync(r => r.Id == roleId, cancellationToken))
+        var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Id == roleId, cancellationToken);
+        if (role is null)
             return Result.Failure("Role not found.");
+
+        var requestedPermissionIds = request.PermissionIds.Distinct().ToList();
+        var existingPermissionIds = await _dbContext.Permissions
+            .Where(p => requestedPermissionIds.Contains(p.Id))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        var invalidPermissionIds = requestedPermissionIds.Except(existingPermissionIds).ToList();
+        if (invalidPermissionIds.Count > 0)
+            return Result.Failure($"Invalid permission ids: {string.Join(", ", invalidPermissionIds)}.");
 
         var existing = await _dbContext.RolePermissions
             .Where(rp => rp.RoleId == roleId)
@@ -107,19 +124,19 @@ public sealed class RoleService : IRoleService
 
         _dbContext.RolePermissions.RemoveRange(existing);
 
-        foreach (var permId in request.PermissionIds.Distinct())
-        {
-            if (await _dbContext.Permissions.AnyAsync(p => p.Id == permId, cancellationToken))
-                _dbContext.RolePermissions.Add(RolePermission.Create(roleId, permId));
-        }
+        foreach (var permId in requestedPermissionIds)
+            _dbContext.RolePermissions.Add(RolePermission.Create(roleId, permId));
 
+        role.SetAudit(currentUserId);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }
 
     public async Task<IReadOnlyList<PermissionResponse>> GetPermissionsAsync(CancellationToken cancellationToken = default)
     {
-        var permissions = await _dbContext.Permissions.ToListAsync(cancellationToken);
+        var permissions = await _dbContext.Permissions
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
         return permissions
             .Select(p => new PermissionResponse(p.Id, p.Name, p.Module, p.Action, p.Description))
             .ToList();

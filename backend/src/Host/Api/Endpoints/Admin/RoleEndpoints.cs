@@ -63,9 +63,10 @@ public static class RoleEndpoints
         return Results.Ok(result.Value);
     }
 
-    private static async Task<IResult> DeleteRole(long id, IRoleService roleService, CancellationToken cancellationToken)
+    private static async Task<IResult> DeleteRole(long id, IRoleService roleService, HttpContext httpContext, CancellationToken cancellationToken)
     {
-        var result = await roleService.DeleteRoleAsync(id, cancellationToken);
+        var currentUserId = httpContext.User.FindFirst("user_id")?.Value ?? "system";
+        var result = await roleService.DeleteRoleAsync(id, currentUserId, cancellationToken);
         if (result.IsFailure) return Results.BadRequest(new { message = result.Error });
         return Results.NoContent();
     }
@@ -77,9 +78,10 @@ public static class RoleEndpoints
         return Results.Ok(role.Permissions);
     }
 
-    private static async Task<IResult> AssignPermissions(long id, AssignPermissionsRequest request, IRoleService roleService, CancellationToken cancellationToken)
+    private static async Task<IResult> AssignPermissions(long id, AssignPermissionsRequest request, IRoleService roleService, HttpContext httpContext, CancellationToken cancellationToken)
     {
-        var result = await roleService.AssignPermissionsAsync(id, request, cancellationToken);
+        var currentUserId = httpContext.User.FindFirst("user_id")?.Value ?? "system";
+        var result = await roleService.AssignPermissionsAsync(id, request, currentUserId, cancellationToken);
         if (result.IsFailure) return Results.BadRequest(new { message = result.Error });
         return Results.Ok(new { message = "Permissions assigned successfully." });
     }

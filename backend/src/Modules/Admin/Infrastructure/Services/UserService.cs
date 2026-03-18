@@ -22,7 +22,10 @@ public sealed class UserService : IUserService
 
     public async Task<PagedResult<UserResponse>> GetUsersAsync(GetUsersQuery query, CancellationToken cancellationToken = default)
     {
-        var queryable = _dbContext.Users.Include(u => u.Role).AsQueryable();
+        var queryable = _dbContext.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
         {
@@ -74,6 +77,7 @@ public sealed class UserService : IUserService
     public async Task<UserResponse?> GetUserByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         var user = await _dbContext.Users
+            .AsNoTracking()
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
@@ -89,6 +93,13 @@ public sealed class UserService : IUserService
 
         if (!await _dbContext.Roles.AnyAsync(r => r.Id == request.RoleId, cancellationToken))
             return Result.Failure<UserResponse>("The specified role does not exist.");
+
+        if (request.ManagerId.HasValue)
+        {
+            var managerExists = await _dbContext.Users.AnyAsync(u => u.Id == request.ManagerId.Value, cancellationToken);
+            if (!managerExists)
+                return Result.Failure<UserResponse>("The specified manager does not exist.");
+        }
 
         var passwordHash = _passwordHasher.Hash(request.Password);
         var user = User.Create(normalizedEmail, passwordHash, request.FirstName, request.LastName,
@@ -116,6 +127,16 @@ public sealed class UserService : IUserService
 
         if (!await _dbContext.Roles.AnyAsync(r => r.Id == request.RoleId, cancellationToken))
             return Result.Failure<UserResponse>("The specified role does not exist.");
+
+        if (request.ManagerId == id)
+            return Result.Failure<UserResponse>("A user cannot be their own manager.");
+
+        if (request.ManagerId.HasValue)
+        {
+            var managerExists = await _dbContext.Users.AnyAsync(u => u.Id == request.ManagerId.Value, cancellationToken);
+            if (!managerExists)
+                return Result.Failure<UserResponse>("The specified manager does not exist.");
+        }
 
         user.UpdateProfile(request.FirstName, request.LastName, request.Phone, request.DepartmentId, request.ManagerId);
 
@@ -153,6 +174,18 @@ public sealed class UserService : IUserService
             return Result.Failure("User not found.");
 
         user.Activate();
+        user.SetAudit(currentUserId);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return Result.Success();
+    }
+
+    public async Task<Result> DeactivateUserAsync(long id, string currentUserId, CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        if (user is null)
+            return Result.Failure("User not found.");
+
+        user.Deactivate();
         user.SetAudit(currentUserId);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

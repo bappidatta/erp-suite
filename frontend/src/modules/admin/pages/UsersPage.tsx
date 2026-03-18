@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { ColumnDef, ColumnFiltersState, OnChangeFn, SortingState } from "@tanstack/react-table";
-import { Plus, Trash2, Edit, CheckCircle } from "lucide-react";
+import { Plus, Trash2, Edit, CheckCircle, Ban } from "lucide-react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import { Badge } from "@app/components/ui/badge";
@@ -16,7 +16,7 @@ import {
   PageLayout, DataTable, FormField, FormGrid, FormActions,
   ColumnFilterInput, ColumnFilterSelect,
 } from "@shared/components";
-import { getUsers, getRoles, createUser, updateUser, deleteUser, activateUser } from "../api/adminApi";
+import { getUsers, getRoles, createUser, updateUser, deleteUser, activateUser, deactivateUser } from "../api/adminApi";
 import type { User, Role, CreateUserRequest, UpdateUserRequest, PagedResult } from "../types";
 
 const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -253,6 +253,11 @@ export function UsersPage() {
     fetchUsers();
   };
 
+  const handleDeactivate = async (user: User) => {
+    await deactivateUser(user.id);
+    fetchUsers();
+  };
+
   const users = result?.items ?? [];
 
   const columns: ColumnDef<User>[] = [
@@ -318,6 +323,11 @@ export function UsersPage() {
             {user.status !== 1 && (
               <Button variant="ghost" size="sm" onClick={() => handleActivate(user)} title="Activate">
                 <CheckCircle className="h-4 w-4 text-green-600" />
+              </Button>
+            )}
+            {user.status === 1 && (
+              <Button variant="ghost" size="sm" onClick={() => handleDeactivate(user)} title="Deactivate">
+                <Ban className="h-4 w-4 text-amber-600" />
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={() => { setEditingUser(user); setFormOpen(true); }} title="Edit">

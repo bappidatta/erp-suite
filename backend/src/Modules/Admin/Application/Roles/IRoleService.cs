@@ -9,7 +9,7 @@ public interface IRoleService
     Task<RoleDetailResponse?> GetRoleByIdAsync(long id, CancellationToken cancellationToken = default);
     Task<Result<RoleResponse>> CreateRoleAsync(CreateRoleRequest request, string currentUserId, CancellationToken cancellationToken = default);
     Task<Result<RoleResponse>> UpdateRoleAsync(long id, UpdateRoleRequest request, string currentUserId, CancellationToken cancellationToken = default);
-    Task<Result> DeleteRoleAsync(long id, CancellationToken cancellationToken = default);
-    Task<Result> AssignPermissionsAsync(long roleId, AssignPermissionsRequest request, CancellationToken cancellationToken = default);
+    Task<Result> DeleteRoleAsync(long id, string currentUserId, CancellationToken cancellationToken = default);
+    Task<Result> AssignPermissionsAsync(long roleId, AssignPermissionsRequest request, string currentUserId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<PermissionResponse>> GetPermissionsAsync(CancellationToken cancellationToken = default);
 }

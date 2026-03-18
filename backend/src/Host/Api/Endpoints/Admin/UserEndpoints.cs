@@ -27,6 +27,8 @@ public static class UserEndpoints
 
         group.MapPost("{id:long}/activate", ActivateUser);
 
+        group.MapPost("{id:long}/deactivate", DeactivateUser);
+
         return app;
     }
 
@@ -72,5 +74,13 @@ public static class UserEndpoints
         var result = await userService.ActivateUserAsync(id, currentUserId, cancellationToken);
         if (result.IsFailure) return Results.BadRequest(new { message = result.Error });
         return Results.Ok(new { message = "User activated successfully." });
+    }
+
+    private static async Task<IResult> DeactivateUser(long id, IUserService userService, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        var currentUserId = httpContext.User.FindFirst("user_id")?.Value ?? "system";
+        var result = await userService.DeactivateUserAsync(id, currentUserId, cancellationToken);
+        if (result.IsFailure) return Results.BadRequest(new { message = result.Error });
+        return Results.Ok(new { message = "User deactivated successfully." });
     }
 }
