@@ -233,7 +233,6 @@ public sealed class NumberSequenceService : INumberSequenceService
             catch (DbUpdateConcurrencyException)
             {
                 _dbContext.ChangeTracker.Clear();
-                return Result.Failure<string>("Unable to allocate the next number because the sequence was updated by another request. Please try again.");
             }
         }
 

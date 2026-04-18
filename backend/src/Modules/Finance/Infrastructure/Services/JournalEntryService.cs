@@ -143,7 +143,6 @@ public sealed class JournalEntryService : IJournalEntryService
             catch (DbUpdateConcurrencyException)
             {
                 _dbContext.ChangeTracker.Clear();
-                return Result.Failure<JournalEntryResponse>("Unable to create the journal entry because the number sequence was updated by another request. Please try again.");
             }
         }
 
