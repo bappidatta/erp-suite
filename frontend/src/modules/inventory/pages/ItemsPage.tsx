@@ -57,7 +57,7 @@ function ItemForm({
     name: item?.name ?? "",
     description: item?.description ?? "",
     uomId: item?.uomId?.toString() ?? "",
-    categoryId: item?.categoryId?.toString() ?? "",
+    categoryId: item?.categoryId?.toString() ?? NONE_OPTION_VALUE,
     type: item?.type?.toString() ?? "1",
     valuationMethod: item?.valuationMethod?.toString() ?? "1",
     standardCost: item?.standardCost?.toString() ?? "0",
@@ -80,7 +80,7 @@ function ItemForm({
         name: form.name,
         description: form.description || undefined,
         uomId: Number(form.uomId),
-        categoryId: form.categoryId ? Number(form.categoryId) : undefined,
+        categoryId: form.categoryId !== NONE_OPTION_VALUE ? Number(form.categoryId) : undefined,
         type: Number(form.type),
         valuationMethod: Number(form.valuationMethod),
         standardCost: Number(form.standardCost) || 0,
@@ -130,7 +130,7 @@ function ItemForm({
           </Select>
         </FormField>
         <FormField id="categoryId" label="Category">
-          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v === NONE_OPTION_VALUE ? "" : (v ?? ""))}>
+          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
             <SelectTrigger id="categoryId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>

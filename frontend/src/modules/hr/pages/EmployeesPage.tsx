@@ -56,7 +56,7 @@ function EmployeeForm({
     lastName: employee?.lastName ?? "",
     email: employee?.email ?? "",
     phone: employee?.phone ?? "",
-    departmentId: employee?.departmentId?.toString() ?? "",
+    departmentId: employee?.departmentId?.toString() ?? NONE_OPTION_VALUE,
     designation: employee?.designation ?? "",
     status: employee?.status?.toString() ?? "1",
     employmentType: employee?.employmentType?.toString() ?? "1",
@@ -79,7 +79,7 @@ function EmployeeForm({
         lastName: form.lastName,
         email: form.email || undefined,
         phone: form.phone || undefined,
-        departmentId: form.departmentId ? Number(form.departmentId) : undefined,
+        departmentId: form.departmentId !== NONE_OPTION_VALUE ? Number(form.departmentId) : undefined,
         designation: form.designation || undefined,
         status: Number(form.status),
         employmentType: Number(form.employmentType),
@@ -128,7 +128,7 @@ function EmployeeForm({
 
       <FormGrid>
         <FormField id="departmentId" label="Department">
-          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v === NONE_OPTION_VALUE ? "" : (v ?? ""))}>
+          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v)}>
             <SelectTrigger id="departmentId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>

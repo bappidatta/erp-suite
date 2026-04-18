@@ -27,7 +27,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 
 ---
 
-## Phase 0: Foundation Setup (Week 1-2) ✅
+## Phase 0: Foundation Setup (Week 1-2)
 
 ### Objectives
 - Establish development environment
@@ -117,7 +117,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 
 ---
 
-## Phase 1: Core Platform & Master Data (Week 3-7) ✅
+## Phase 1: Core Platform & Master Data (Week 3-7)
 
 ### Objectives
 - Complete Admin module
