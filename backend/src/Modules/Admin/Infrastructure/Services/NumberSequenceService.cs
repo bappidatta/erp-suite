@@ -226,10 +226,6 @@ public sealed class NumberSequenceService : INumberSequenceService
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return Result.Success(nextNumber);
             }
-            catch (DbUpdateConcurrencyException) when (attempt < MaxRetryAttempts - 1)
-            {
-                _dbContext.ChangeTracker.Clear();
-            }
             catch (DbUpdateConcurrencyException)
             {
                 _dbContext.ChangeTracker.Clear();

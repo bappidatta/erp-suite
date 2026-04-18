@@ -136,10 +136,6 @@ public sealed class JournalEntryService : IJournalEntryService
                 var created = await LoadJournalEntryAsync(entry.Id, asNoTracking: true, cancellationToken);
                 return Result.Success(MapToResponse(created!));
             }
-            catch (DbUpdateConcurrencyException) when (attempt < MaxCreateAttempts - 1)
-            {
-                _dbContext.ChangeTracker.Clear();
-            }
             catch (DbUpdateConcurrencyException)
             {
                 _dbContext.ChangeTracker.Clear();
