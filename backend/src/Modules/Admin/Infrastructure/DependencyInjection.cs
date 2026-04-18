@@ -1,5 +1,6 @@
 using ErpSuite.Modules.Admin.Application.Auth;
 using ErpSuite.Modules.Admin.Application.Dashboard;
+using ErpSuite.Modules.Admin.Application.NumberSequences;
 using ErpSuite.Modules.Admin.Application.Organization;
 using ErpSuite.Modules.Admin.Application.Roles;
 using ErpSuite.Modules.Admin.Application.Users;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IOrganizationSettingsService, OrganizationSettingsService>();
+        services.AddScoped<INumberSequenceService, NumberSequenceService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<AdminDataSeeder>();
 

@@ -83,13 +83,16 @@ public static class AuthEndpoints
         var emailClaim = httpContext.User.FindFirst(ClaimTypes.Email)?.Value ?? httpContext.User.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
         var nameClaim = httpContext.User.FindFirst(ClaimTypes.Name)?.Value ?? httpContext.User.FindFirst(JwtRegisteredClaimNames.Name)?.Value;
         var roleClaim = httpContext.User.FindFirst(ClaimTypes.Role)?.Value;
+        var companyIdClaim = httpContext.User.FindFirst("company_id")?.Value;
+        var companyNameClaim = httpContext.User.FindFirst("company_name")?.Value;
 
         if (!long.TryParse(userIdClaim, out var userId) || emailClaim is null)
         {
             return Results.Json(new { message = "Invalid token." }, statusCode: StatusCodes.Status401Unauthorized);
         }
 
-        var authUser = new AuthUser(userId, emailClaim, nameClaim ?? "", roleClaim ?? "User");
+        var companyId = long.TryParse(companyIdClaim, out var parsedCompanyId) ? parsedCompanyId : 1L;
+        var authUser = new AuthUser(userId, emailClaim, nameClaim ?? "", roleClaim ?? "User", companyId, companyNameClaim ?? "ERP Suite");
         return Results.Ok(authUser);
     }
 

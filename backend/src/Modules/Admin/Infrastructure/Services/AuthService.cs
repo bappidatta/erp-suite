@@ -57,7 +57,13 @@ public sealed class AuthService : IAuthService
         user.RecordSuccessfulLogin();
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), user.Role.Name);
+        var authUser = new AuthUser(
+            user.Id,
+            user.Email,
+            $"{user.FirstName} {user.LastName}".Trim(),
+            user.Role.Name,
+            await ResolveCompanyIdAsync(cancellationToken),
+            await ResolveCompanyNameAsync(cancellationToken));
         return _tokenService.CreateToken(authUser);
     }
 
@@ -87,7 +93,13 @@ public sealed class AuthService : IAuthService
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), userRole.Name);
+        var authUser = new AuthUser(
+            user.Id,
+            user.Email,
+            $"{user.FirstName} {user.LastName}".Trim(),
+            userRole.Name,
+            await ResolveCompanyIdAsync(cancellationToken),
+            await ResolveCompanyNameAsync(cancellationToken));
         return _tokenService.CreateToken(authUser);
     }
 
@@ -102,7 +114,13 @@ public sealed class AuthService : IAuthService
             return null;
         }
 
-        var authUser = new AuthUser(user.Id, user.Email, $"{user.FirstName} {user.LastName}".Trim(), user.Role.Name);
+        var authUser = new AuthUser(
+            user.Id,
+            user.Email,
+            $"{user.FirstName} {user.LastName}".Trim(),
+            user.Role.Name,
+            await ResolveCompanyIdAsync(cancellationToken),
+            await ResolveCompanyNameAsync(cancellationToken));
         return _tokenService.CreateToken(authUser);
     }
 
@@ -112,5 +130,38 @@ public sealed class AuthService : IAuthService
         {
             await _tokenRevocationService.RevokeAsync(jti, userId, tokenExpiry.Value, cancellationToken);
         }
+    }
+
+    private async Task<long> ResolveCompanyIdAsync(CancellationToken cancellationToken)
+    {
+        var company = await _dbContext.Companies
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Id)
+            .Select(c => new { c.Id })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return company?.Id ?? 1L;
+    }
+
+    private async Task<string> ResolveCompanyNameAsync(CancellationToken cancellationToken)
+    {
+        var companyName = await _dbContext.Companies
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Id)
+            .Select(c => c.Name)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(companyName))
+        {
+            return companyName;
+        }
+
+        return await _dbContext.OrganizationSettings
+            .AsNoTracking()
+            .OrderBy(s => s.Id)
+            .Select(s => s.CompanyName)
+            .FirstOrDefaultAsync(cancellationToken) ?? "ERP Suite";
     }
 }

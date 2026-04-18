@@ -24,6 +24,7 @@ public class ErpDbContext : BaseDbContext
     public DbSet<RevokedToken> RevokedTokens => Set<RevokedToken>();
     public DbSet<OrganizationSettings> OrganizationSettings => Set<OrganizationSettings>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
 
     // Sales
     public DbSet<Customer> Customers => Set<Customer>();
@@ -34,6 +35,9 @@ public class ErpDbContext : BaseDbContext
     // Finance
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+    public DbSet<FinancialPeriod> FinancialPeriods => Set<FinancialPeriod>();
 
     // Inventory
     public DbSet<Category> Categories => Set<Category>();
@@ -203,6 +207,26 @@ public class ErpDbContext : BaseDbContext
             entity.HasIndex(e => e.UserId);
         });
 
+        modelBuilder.Entity<NumberSequence>(entity =>
+        {
+            entity.ToTable("number_sequences");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Module).HasColumnName("module").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.DocumentType).HasColumnName("document_type").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Prefix).HasColumnName("prefix").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Suffix).HasColumnName("suffix").HasMaxLength(50);
+            entity.Property(e => e.StartingNumber).HasColumnName("starting_number");
+            entity.Property(e => e.NextNumber).HasColumnName("next_number");
+            entity.Property(e => e.PaddingLength).HasColumnName("padding_length");
+            entity.Property(e => e.IncrementBy).HasColumnName("increment_by");
+            entity.Property(e => e.ResetPolicy).HasColumnName("reset_policy").HasConversion<int>();
+            entity.Property(e => e.LastResetOn).HasColumnName("last_reset_on");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+
+            entity.HasIndex(e => new { e.Module, e.DocumentType }).IsUnique();
+        });
+
         // ── Sales Entities ──
 
         // Configure Customer entity
@@ -312,6 +336,63 @@ public class ErpDbContext : BaseDbContext
                 .WithMany(e => e.Children)
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<JournalEntry>(entity =>
+        {
+            entity.ToTable("journal_entries");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Number).HasColumnName("number").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.EntryDate).HasColumnName("entry_date");
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Reference).HasColumnName("reference").HasMaxLength(100);
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<int>();
+            entity.Property(e => e.PostedAt).HasColumnName("posted_at");
+            entity.Property(e => e.PostedBy).HasColumnName("posted_by").HasMaxLength(256);
+            entity.Property(e => e.TotalDebit).HasColumnName("total_debit").HasPrecision(18, 2);
+            entity.Property(e => e.TotalCredit).HasColumnName("total_credit").HasPrecision(18, 2);
+
+            entity.HasIndex(e => e.Number).IsUnique();
+            entity.HasIndex(e => e.EntryDate);
+        });
+
+        modelBuilder.Entity<JournalEntryLine>(entity =>
+        {
+            entity.ToTable("journal_entry_lines");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.JournalEntryId).HasColumnName("journal_entry_id");
+            entity.Property(e => e.LineNumber).HasColumnName("line_number");
+            entity.Property(e => e.AccountId).HasColumnName("account_id");
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+            entity.Property(e => e.DebitAmount).HasColumnName("debit_amount").HasPrecision(18, 2);
+            entity.Property(e => e.CreditAmount).HasColumnName("credit_amount").HasPrecision(18, 2);
+
+            entity.HasOne(e => e.JournalEntry)
+                .WithMany(e => e.Lines)
+                .HasForeignKey(e => e.JournalEntryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Account)
+                .WithMany()
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FinancialPeriod>(entity =>
+        {
+            entity.ToTable("financial_periods");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.Status).HasColumnName("status").HasConversion<int>();
+            entity.Property(e => e.ClosedAt).HasColumnName("closed_at");
+            entity.Property(e => e.ClosedBy).HasColumnName("closed_by").HasMaxLength(256);
+
+            entity.HasIndex(e => new { e.StartDate, e.EndDate });
         });
 
         // ── Inventory Entities ──

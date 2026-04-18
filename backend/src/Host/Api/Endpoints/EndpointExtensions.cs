@@ -16,8 +16,12 @@ public static class EndpointExtensions
         app.MapRoleEndpoints();
         app.MapAdminDashboardEndpoints();
         app.MapOrganizationEndpoints();
+        app.MapNumberSequenceEndpoints();
         app.MapAccountEndpoints();
         app.MapTaxCodeEndpoints();
+        app.MapJournalEntryEndpoints();
+        app.MapFinancialPeriodEndpoints();
+        app.MapGeneralLedgerEndpoints();
         app.MapCustomerEndpoints();
         app.MapVendorEndpoints();
         app.MapCategoryEndpoints();

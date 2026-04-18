@@ -2,9 +2,12 @@ using System.Text;
 using Api.Middleware;
 using ErpSuite.Modules.Admin.Application.Auth.Validators;
 using ErpSuite.Modules.Admin.Application.Users.Validators;
+using ErpSuite.Modules.Admin.Application.NumberSequences.Validators;
 using ErpSuite.Modules.Sales.Application.Customers.Validators;
 using ErpSuite.Modules.Procurement.Application.Vendors.Validators;
 using ErpSuite.Modules.Finance.Application.TaxCodes.Validators;
+using ErpSuite.Modules.Finance.Application.JournalEntries.Validators;
+using ErpSuite.Modules.Finance.Application.FinancialPeriods.Validators;
 using ErpSuite.Modules.Inventory.Application.Categories.Validators;
 using ErpSuite.Modules.HR.Application.Departments.Validators;
 using ErpSuite.Modules.Admin.Infrastructure;
@@ -47,9 +50,12 @@ builder.Services.AddHrInfrastructure();
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateNumberSequenceRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCustomerRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateVendorRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateTaxCodeRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateJournalEntryRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateFinancialPeriodRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateDepartmentRequestValidator>();
 
