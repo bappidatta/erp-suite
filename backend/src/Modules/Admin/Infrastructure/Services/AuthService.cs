@@ -31,6 +31,12 @@ public sealed class AuthService : IAuthService
     public async Task<LoginResult?> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var company = await ResolveActiveCompanyAsync(cancellationToken);
+        if (company is null)
+        {
+            _logger.LogWarning("Login attempt rejected because no active company is configured.");
+            return null;
+        }
 
         var user = await _dbContext.Users
             .Include(u => u.Role)
@@ -62,14 +68,20 @@ public sealed class AuthService : IAuthService
             user.Email,
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Role.Name,
-            await ResolveCompanyIdAsync(cancellationToken),
-            await ResolveCompanyNameAsync(cancellationToken));
+            company.Value.Id,
+            company.Value.Name);
         return _tokenService.CreateToken(authUser);
     }
 
     public async Task<LoginResult?> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var company = await ResolveActiveCompanyAsync(cancellationToken);
+        if (company is null)
+        {
+            _logger.LogWarning("Registration attempt rejected because no active company is configured.");
+            return null;
+        }
 
         var existingUser = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
@@ -98,13 +110,20 @@ public sealed class AuthService : IAuthService
             user.Email,
             $"{user.FirstName} {user.LastName}".Trim(),
             userRole.Name,
-            await ResolveCompanyIdAsync(cancellationToken),
-            await ResolveCompanyNameAsync(cancellationToken));
+            company.Value.Id,
+            company.Value.Name);
         return _tokenService.CreateToken(authUser);
     }
 
     public async Task<LoginResult?> RefreshAsync(long userId, CancellationToken cancellationToken)
     {
+        var company = await ResolveActiveCompanyAsync(cancellationToken);
+        if (company is null)
+        {
+            _logger.LogWarning("Token refresh rejected because no active company is configured.");
+            return null;
+        }
+
         var user = await _dbContext.Users
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -119,8 +138,8 @@ public sealed class AuthService : IAuthService
             user.Email,
             $"{user.FirstName} {user.LastName}".Trim(),
             user.Role.Name,
-            await ResolveCompanyIdAsync(cancellationToken),
-            await ResolveCompanyNameAsync(cancellationToken));
+            company.Value.Id,
+            company.Value.Name);
         return _tokenService.CreateToken(authUser);
     }
 
@@ -132,36 +151,15 @@ public sealed class AuthService : IAuthService
         }
     }
 
-    private async Task<long> ResolveCompanyIdAsync(CancellationToken cancellationToken)
+    private async Task<(long Id, string Name)?> ResolveActiveCompanyAsync(CancellationToken cancellationToken)
     {
         var company = await _dbContext.Companies
             .AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.Id)
-            .Select(c => new { c.Id })
+            .Select(c => new { c.Id, c.Name })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return company?.Id ?? 1L;
-    }
-
-    private async Task<string> ResolveCompanyNameAsync(CancellationToken cancellationToken)
-    {
-        var companyName = await _dbContext.Companies
-            .AsNoTracking()
-            .Where(c => c.IsActive)
-            .OrderBy(c => c.Id)
-            .Select(c => c.Name)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (!string.IsNullOrWhiteSpace(companyName))
-        {
-            return companyName;
-        }
-
-        return await _dbContext.OrganizationSettings
-            .AsNoTracking()
-            .OrderBy(s => s.Id)
-            .Select(s => s.CompanyName)
-            .FirstOrDefaultAsync(cancellationToken) ?? "ERP Suite";
+        return company is null ? null : (company.Id, company.Name);
     }
 }

@@ -10,6 +10,7 @@ namespace ErpSuite.Modules.Admin.Infrastructure.Services;
 
 public sealed class NumberSequenceService : INumberSequenceService
 {
+    private const int MaxRetryAttempts = 3;
     private readonly ErpDbContext _dbContext;
 
     public NumberSequenceService(ErpDbContext dbContext)
@@ -204,22 +205,39 @@ public sealed class NumberSequenceService : INumberSequenceService
         var normalizedModule = module.Trim().ToLowerInvariant();
         var normalizedDocumentType = documentType.Trim().ToLowerInvariant();
 
-        var sequence = await _dbContext.NumberSequences.FirstOrDefaultAsync(
-            x => x.IsActive &&
-                x.Module.ToLower() == normalizedModule &&
-                x.DocumentType.ToLower() == normalizedDocumentType,
-            cancellationToken);
-
-        if (sequence is null)
+        for (var attempt = 0; attempt < MaxRetryAttempts; attempt++)
         {
-            return Result.Failure<string>("No active number sequence configured for this module and document type.");
+            var sequence = await _dbContext.NumberSequences.FirstOrDefaultAsync(
+                x => x.IsActive &&
+                    x.Module.ToLower() == normalizedModule &&
+                    x.DocumentType.ToLower() == normalizedDocumentType,
+                cancellationToken);
+
+            if (sequence is null)
+            {
+                return Result.Failure<string>("No active number sequence configured for this module and document type.");
+            }
+
+            var nextNumber = sequence.ConsumeNext(DateTime.UtcNow);
+            sequence.SetAudit(currentUserId);
+
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return Result.Success(nextNumber);
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < MaxRetryAttempts - 1)
+            {
+                _dbContext.ChangeTracker.Clear();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _dbContext.ChangeTracker.Clear();
+                return Result.Failure<string>("Unable to allocate the next number because the sequence was updated by another request. Please try again.");
+            }
         }
 
-        var nextNumber = sequence.ConsumeNext(DateTime.UtcNow);
-        sequence.SetAudit(currentUserId);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return Result.Success(nextNumber);
+        return Result.Failure<string>("Unable to allocate the next number because the sequence was updated by another request. Please try again.");
     }
 
     private async Task<bool> ExistsAsync(string module, string documentType, long? excludeId, CancellationToken cancellationToken)

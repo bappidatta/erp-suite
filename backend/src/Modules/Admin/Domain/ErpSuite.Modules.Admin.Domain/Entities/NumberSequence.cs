@@ -72,31 +72,31 @@ public class NumberSequence : BaseAuditableEntity
 
     public string Preview(DateTime asOfUtc)
     {
-        ApplyResetIfNeeded(asOfUtc);
-        return FormatNumber(NextNumber);
+        return FormatNumber(GetEffectiveNextNumber(asOfUtc));
     }
 
     public string ConsumeNext(DateTime asOfUtc)
     {
-        ApplyResetIfNeeded(asOfUtc);
-        var current = FormatNumber(NextNumber);
-        NextNumber += IncrementBy;
+        var effectiveNextNumber = GetEffectiveNextNumber(asOfUtc);
+        var current = FormatNumber(effectiveNextNumber);
+        NextNumber = effectiveNextNumber + IncrementBy;
+        LastResetOn = asOfUtc.Date;
         return current;
     }
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 
-    private void ApplyResetIfNeeded(DateTime asOfUtc)
+    private int GetEffectiveNextNumber(DateTime asOfUtc)
     {
         if (ResetPolicy == NumberSequenceResetPolicy.Annual &&
             LastResetOn.HasValue &&
             LastResetOn.Value.Year != asOfUtc.Year)
         {
-            NextNumber = StartingNumber;
+            return StartingNumber;
         }
 
-        LastResetOn = asOfUtc.Date;
+        return NextNumber;
     }
 
     private string FormatNumber(int value)

@@ -113,6 +113,29 @@ public sealed class JournalEntryServiceTests
         result.Error.Should().Contain("accounting period");
     }
 
+    [Fact]
+    public async Task GetJournalEntriesAsync_ShouldNotPopulateLines_ForListResults()
+    {
+        var (cashAccountId, revenueAccountId) = await CreatePostableAccountsAsync();
+        var create = await _sut.CreateJournalEntryAsync(
+            new CreateJournalEntryRequest(
+                DateTime.UtcNow.Date,
+                "List entry",
+                Lines:
+                [
+                    new JournalEntryLineRequest(1, cashAccountId, 75m, 0m),
+                    new JournalEntryLineRequest(2, revenueAccountId, 0m, 75m)
+                ]),
+            "user-1");
+
+        var listResult = await _sut.GetJournalEntriesAsync(new GetJournalEntriesQuery());
+        var detailResult = await _sut.GetJournalEntryByIdAsync(create.Value.Id);
+
+        listResult.Items.Should().ContainSingle();
+        listResult.Items[0].Lines.Should().BeEmpty();
+        detailResult!.Lines.Should().HaveCount(2);
+    }
+
     private async Task<(long CashAccountId, long RevenueAccountId)> CreatePostableAccountsAsync()
     {
         var cash = await _accountService.CreateAccountAsync(new CreateAccountRequest("1000", "Cash", AccountType.Asset), "user-1");

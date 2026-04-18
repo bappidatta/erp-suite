@@ -10,6 +10,7 @@ namespace ErpSuite.Modules.Finance.Infrastructure.Services;
 
 public sealed class JournalEntryService : IJournalEntryService
 {
+    private const int MaxCreateAttempts = 3;
     private readonly ErpDbContext _dbContext;
 
     public JournalEntryService(ErpDbContext dbContext)
@@ -21,8 +22,6 @@ public sealed class JournalEntryService : IJournalEntryService
     {
         var queryable = _dbContext.JournalEntries
             .AsNoTracking()
-            .Include(x => x.Lines)
-                .ThenInclude(x => x.Account)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
@@ -61,10 +60,44 @@ public sealed class JournalEntryService : IJournalEntryService
         var totalCount = await queryable.CountAsync(cancellationToken);
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize, 1, 100);
-        var items = await queryable.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        var items = await queryable
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(entry => new
+            {
+                entry.Id,
+                entry.Number,
+                entry.EntryDate,
+                entry.Description,
+                entry.Reference,
+                entry.Status,
+                entry.PostedAt,
+                entry.PostedBy,
+                entry.TotalDebit,
+                entry.TotalCredit,
+                entry.CreatedAt,
+                entry.CreatedBy,
+                entry.UpdatedAt
+            })
+            .ToListAsync(cancellationToken);
 
         return new PagedResult<JournalEntryResponse>(
-            items.Select(MapToResponse).ToList(),
+            items.Select(entry => new JournalEntryResponse(
+                entry.Id,
+                entry.Number,
+                entry.EntryDate,
+                entry.Description,
+                entry.Reference,
+                entry.Status,
+                entry.Status.ToString(),
+                entry.PostedAt,
+                entry.PostedBy,
+                entry.TotalDebit,
+                entry.TotalCredit,
+                Array.Empty<JournalEntryLineResponse>(),
+                entry.CreatedAt,
+                entry.CreatedBy,
+                entry.UpdatedAt)).ToList(),
             totalCount,
             page,
             pageSize);
@@ -78,26 +111,43 @@ public sealed class JournalEntryService : IJournalEntryService
 
     public async Task<Result<JournalEntryResponse>> CreateJournalEntryAsync(CreateJournalEntryRequest request, string currentUserId, CancellationToken cancellationToken = default)
     {
-        var validation = await ValidateLinesAsync(request.EntryDate, request.Lines, cancellationToken);
-        if (validation.IsFailure)
+        for (var attempt = 0; attempt < MaxCreateAttempts; attempt++)
         {
-            return Result.Failure<JournalEntryResponse>(validation.Error);
+            var validation = await ValidateLinesAsync(request.EntryDate, request.Lines, cancellationToken);
+            if (validation.IsFailure)
+            {
+                return Result.Failure<JournalEntryResponse>(validation.Error);
+            }
+
+            var entry = JournalEntry.Create(
+                await GenerateEntryNumberAsync(currentUserId, cancellationToken),
+                request.EntryDate.Date,
+                request.Description.Trim(),
+                request.Reference?.Trim(),
+                validation.Value);
+
+            entry.SetAudit(currentUserId);
+            _dbContext.JournalEntries.Add(entry);
+
+            try
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                var created = await LoadJournalEntryAsync(entry.Id, asNoTracking: true, cancellationToken);
+                return Result.Success(MapToResponse(created!));
+            }
+            catch (DbUpdateConcurrencyException) when (attempt < MaxCreateAttempts - 1)
+            {
+                _dbContext.ChangeTracker.Clear();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _dbContext.ChangeTracker.Clear();
+                return Result.Failure<JournalEntryResponse>("Unable to create the journal entry because the number sequence was updated by another request. Please try again.");
+            }
         }
 
-        var entryNumber = await GenerateEntryNumberAsync(currentUserId, cancellationToken);
-        var entry = JournalEntry.Create(
-            entryNumber,
-            request.EntryDate.Date,
-            request.Description.Trim(),
-            request.Reference?.Trim(),
-            validation.Value);
-
-        entry.SetAudit(currentUserId);
-        _dbContext.JournalEntries.Add(entry);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-
-        var created = await LoadJournalEntryAsync(entry.Id, asNoTracking: true, cancellationToken);
-        return Result.Success(MapToResponse(created!));
+        return Result.Failure<JournalEntryResponse>("Unable to create the journal entry because the number sequence was updated by another request. Please try again.");
     }
 
     public async Task<Result<JournalEntryResponse>> UpdateJournalEntryAsync(long id, UpdateJournalEntryRequest request, string currentUserId, CancellationToken cancellationToken = default)
@@ -242,7 +292,7 @@ public sealed class JournalEntryService : IJournalEntryService
 
         if (sequence is null)
         {
-            return $"JE-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+            return $"JE-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}"[..35];
         }
 
         var next = sequence.ConsumeNext(DateTime.UtcNow);

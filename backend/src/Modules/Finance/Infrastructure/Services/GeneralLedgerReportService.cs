@@ -19,8 +19,6 @@ public sealed class GeneralLedgerReportService : IGeneralLedgerReportService
     {
         var lines = _dbContext.JournalEntryLines
             .AsNoTracking()
-            .Include(x => x.Account)
-            .Include(x => x.JournalEntry)
             .Where(x => x.JournalEntry.Status == JournalEntryStatus.Posted)
             .AsQueryable();
 
