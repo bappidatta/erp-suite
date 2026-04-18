@@ -1,13 +1,18 @@
 # ERP Suite MVP - Implementation Plan
 
 **Date:** March 8, 2026  
-**Version:** 1.0  
+**Version:** 1.1  
 **Duration:** 16-20 weeks (4-5 months)
 
 ---
 
 ## Executive Summary
 This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks. Each phase has clear deliverables, success criteria, and dependencies.
+
+**Progress Legend:**
+- `[x]` Completed
+- `[-]` In Progress
+- `[ ]` Not Started
 
 ---
 
@@ -22,7 +27,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 
 ---
 
-## Phase 0: Foundation Setup (Week 1-2)
+## Phase 0: Foundation Setup (Week 1-2) ✅
 
 ### Objectives
 - Establish development environment
@@ -33,32 +38,32 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 ### Sprint 0.1: Local Development Environment (Week 1)
 
 **Backend Tasks:**
-- [ ] Create .NET solution file with module structure
-- [ ] Set up EF Core with PostgreSQL provider
-- [ ] Add migration infrastructure
-- [ ] Create BuildingBlocks projects:
-  - [ ] Domain (base entities, value objects, domain events)
-  - [ ] Application (result types, validation, contracts)
-  - [ ] Infrastructure (EF Core base repository, audit interceptor)
-  - [ ] Presentation (base controllers, filters, middleware)
-- [ ] Configure dependency injection container structure
-- [ ] Add logging (Serilog with structured logging)
-- [ ] Create first migration with audit columns standard
+- [x] Create .NET solution file with module structure
+- [x] Set up EF Core with PostgreSQL provider
+- [x] Add migration infrastructure
+- [x] Create BuildingBlocks projects:
+  - [x] Domain (base entities, value objects, domain events)
+  - [x] Application (result types, validation, contracts)
+  - [x] Infrastructure (EF Core base repository, audit interceptor)
+  - [x] Presentation (base controllers, filters, middleware)
+- [x] Configure dependency injection container structure
+- [x] Add logging (Serilog with structured logging)
+- [x] Create first migration with audit columns standard
 
 **Frontend Tasks:**
-- [ ] Run `npm install` in frontend directory
-- [ ] Initialize shadcn/ui: `npx shadcn@latest init`
-- [ ] Set up essential shadcn components (Button, Input, Table, Dialog, Form)
-- [ ] Create API client base (`src/shared/api/client.ts`)
-- [ ] Set up React Query or SWR for data fetching
-- [ ] Create auth context and protected route wrapper
-- [ ] Add basic layout shell (header, sidebar, content)
+- [x] Run `npm install` in frontend directory
+- [x] Initialize shadcn/ui: `npx shadcn@latest init`
+- [x] Set up essential shadcn components (Button, Input, Table, Dialog, Form)
+- [x] Create API client base (`src/shared/api/client.ts`)
+- [x] Set up React Query or SWR for data fetching
+- [x] Create auth context and protected route wrapper
+- [x] Add basic layout shell (header, sidebar, content)
 
 **Infrastructure Tasks:**
-- [ ] Create docker-compose.yml for PostgreSQL
+- [x] Create docker-compose.yml for PostgreSQL
 - [ ] Add pgAdmin service (optional)
-- [ ] Create database initialization script
-- [ ] Set up local environment variables template (.env.example)
+- [x] Create database initialization script
+- [x] Set up local environment variables template (.env.example)
 
 **Deliverables:**
 - Backend API runs on https://localhost:5001
@@ -70,20 +75,20 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 ### Sprint 0.2: Authentication & Authorization Foundation (Week 2)
 
 **Backend Tasks:**
-- [ ] Implement ASP.NET Core Identity or JWT-based auth
-- [ ] Create User, Role, Permission entities in Admin module
-- [ ] Build authentication endpoints (login, logout, refresh token)
-- [ ] Implement role-based authorization policies
+- [x] Implement ASP.NET Core Identity or JWT-based auth
+- [x] Create User, Role, Permission entities in Admin module
+- [x] Build authentication endpoints (login, logout, refresh token)
+- [x] Implement role-based authorization policies
 - [ ] Add tenant/company context middleware
-- [ ] Create seed data for initial admin user
+- [x] Create seed data for initial admin user
 
 **Frontend Tasks:**
-- [ ] Build login page
-- [ ] Implement auth token storage (localStorage/sessionStorage)
-- [ ] Create auth guards for protected routes
-- [ ] Add logout functionality
-- [ ] Build basic user profile dropdown
-- [ ] Handle 401/403 responses globally
+- [x] Build login page
+- [x] Implement auth token storage (localStorage/sessionStorage)
+- [x] Create auth guards for protected routes
+- [x] Add logout functionality
+- [x] Build basic user profile dropdown
+- [x] Handle 401/403 responses globally
 
 **Deliverables:**
 - Login works end-to-end
@@ -94,15 +99,15 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 ### Sprint 0.3: Auth Hardening & Gap Closure (Extension)
 
 **Backend Tasks:**
-- [ ] Add explicit logout endpoint and contract
-- [ ] Introduce policy-based authorization definitions
+- [x] Add explicit logout endpoint and contract
+- [x] Introduce policy-based authorization definitions
 - [ ] Add tenant/company context middleware baseline
-- [ ] Keep admin authorization policy-driven (not only attribute-role literals)
+- [x] Keep admin authorization policy-driven (not only attribute-role literals)
 
 **Frontend Tasks:**
-- [ ] Add global 401/403 handling path for API responses
-- [ ] Ensure logout API call and local session cleanup are both handled
-- [ ] Resolve broken profile navigation path
+- [x] Add global 401/403 handling path for API responses
+- [x] Ensure logout API call and local session cleanup are both handled
+- [x] Resolve broken profile navigation path
 
 **Deliverables:**
 - Logout endpoint available and callable
@@ -112,7 +117,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 
 ---
 
-## Phase 1: Core Platform & Master Data (Week 3-7)
+## Phase 1: Core Platform & Master Data (Week 3-7) ✅
 
 ### Objectives
 - Complete Admin module
@@ -122,71 +127,71 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 ### Sprint 1.1: Admin Module (Week 3-4)
 
 **Backend Tasks:**
-- [ ] User management CRUD
-- [ ] Role management CRUD
-- [ ] Permission assignment to roles
-- [ ] Organization/Company settings entity
-- [ ] Fiscal year configuration
-- [ ] Currency and tax defaults
+- [x] User management CRUD
+- [x] Role management CRUD
+- [x] Permission assignment to roles
+- [x] Organization/Company settings entity
+- [x] Fiscal year configuration
+- [x] Currency and tax defaults
 - [ ] Number sequence configuration for documents
-- [ ] Audit log query endpoints
+- [x] Audit log query endpoints
 
 **Frontend Tasks:**
-- [ ] User list, create, edit, delete screens
-- [ ] Role list and assignment screen
-- [ ] Organization settings screen
-- [ ] Fiscal year configuration screen
-- [ ] Admin dashboard with system stats
+- [x] User list, create, edit, delete screens
+- [x] Role list and assignment screen
+- [x] Organization settings screen
+- [ ] Fiscal year configuration screen (deferred to Phase 2)
+- [x] Admin dashboard with system stats
 
 **Deliverables:**
-- Complete user and role management
-- System administrator can configure organization settings
-- Audit trail visible for admin actions
+- [x] Complete user and role management
+- [x] System administrator can configure organization settings
+- [x] Audit trail visible for admin actions
 
 ### Sprint 1.2: Master Data Module - Part 1 (Week 5)
 
 **Backend Tasks:**
-- [ ] Customer master (with credit limit, tax info, addresses)
-- [ ] Vendor master (with payment terms, bank details)
-- [ ] Tax master (tax codes, rates, applicability)
-- [ ] Chart of Accounts (hierarchy, account types)
-- [ ] Validation rules and duplicate prevention
+- [x] Customer master (with credit limit, tax info, addresses)
+- [x] Vendor master (with payment terms, bank details)
+- [x] Tax master (tax codes, rates, applicability)
+- [x] Chart of Accounts (hierarchy, account types)
+- [x] Validation rules and duplicate prevention
 
 **Frontend Tasks:**
-- [ ] Customer list, create, edit screens with search/filter
-- [ ] Vendor list, create, edit screens
-- [ ] Tax configuration screen
-- [ ] Chart of Accounts tree view and management
-- [ ] CSV import UI for customers and vendors
+- [x] Customer list, create, edit screens with search/filter
+- [x] Vendor list, create, edit screens
+- [x] Tax configuration screen
+- [x] Chart of Accounts tree view and management
+- [ ] CSV import UI for customers and vendors (deferred)
 
 **Deliverables:**
-- Customer and vendor masters fully functional
-- Tax codes can be configured
-- Chart of accounts set up and ready
+- [x] Customer and vendor masters fully functional
+- [x] Tax codes can be configured
+- [x] Chart of accounts set up and ready
 
 ### Sprint 1.3: Master Data Module - Part 2 (Week 6-7)
 
 **Backend Tasks:**
-- [ ] Item master (SKU, UOM, category, valuation method)
-- [ ] Warehouse and location master
-- [ ] Employee master (basic profile, department, status)
-- [ ] Department master
-- [ ] UOM master
-- [ ] Category master
-- [ ] Master data import/export endpoints (CSV)
+- [x] Item master (SKU, UOM, category, valuation method)
+- [x] Warehouse and location master
+- [x] Employee master (basic profile, department, status)
+- [x] Department master
+- [x] UOM master
+- [x] Category master
+- [ ] Master data import/export endpoints (CSV) (deferred)
 
 **Frontend Tasks:**
-- [ ] Item master list, create, edit screens with image upload
-- [ ] Warehouse and location management screens
-- [ ] Employee list and profile screens
-- [ ] Department and category management
-- [ ] CSV import screens with validation feedback
-- [ ] Master data dashboard showing record counts
+- [x] Item master list, create, edit screens with UOM and category dropdowns
+- [x] Warehouse and location management screens
+- [x] Employee list and profile screens with department dropdown
+- [x] Department and category management
+- [ ] CSV import screens with validation feedback (deferred)
+- [ ] Master data dashboard showing record counts (deferred)
 
 **Deliverables:**
-- All master data entities operational
-- CSV import/export working for key entities
-- Data validation prevents duplicates and invalid entries
+- [x] All master data entities operational
+- [ ] CSV import/export working for key entities (deferred)
+- [x] Data validation prevents duplicates and invalid entries
 
 ---
 
@@ -335,7 +340,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 ### Sprint 3.1: HR Module (Week 16-17)
 
 **Backend Tasks:**
-- [ ] Employee detailed profile
+- [x] Employee detailed profile
 - [ ] Attendance entity and bulk import
 - [ ] Leave request entity and approval
 - [ ] Leave balance calculation
@@ -343,7 +348,7 @@ This plan breaks down the ERP MVP into 4 phases across approximately 16-20 weeks
 - [ ] Employee status transitions
 
 **Frontend Tasks:**
-- [ ] Employee profile screen
+- [x] Employee profile screen
 - [ ] Attendance capture and CSV import
 - [ ] Leave request and approval screens
 - [ ] Leave balance view
@@ -480,15 +485,11 @@ Track these in first 90 days:
 
 ## Next Immediate Actions
 
-1. **Kick off Sprint 0.1** (this week)
-2. Set up developer machines with:
-   - .NET SDK 8.0+
-   - Node.js 20+
-   - PostgreSQL client tools
-   - Docker Desktop
-3. Schedule daily standups
-4. Create project board (GitHub Projects, Jira, or Azure DevOps)
-5. Assign module ownership to team members
+1. **Start Sprint 2.1 — Finance GL Foundation** (next sprint)
+2. Implement journal entry entity and posting logic
+3. Build trial balance and ledger inquiry backend services
+4. Create GL frontend screens (journal entry, trial balance, ledger)
+5. Ensure period lock mechanism prevents backdated entries
 
 ---
 
