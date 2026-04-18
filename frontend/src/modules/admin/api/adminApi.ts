@@ -13,6 +13,9 @@ import type {
   CreateRoleRequest,
   UpdateRoleRequest,
   UpdateOrganizationSettingsRequest,
+  NumberSequence,
+  CreateNumberSequenceRequest,
+  UpdateNumberSequenceRequest,
 } from "../types";
 
 const ADMIN = "/api/admin";
@@ -105,3 +108,36 @@ export const getAuditLogs = (params?: Record<string, string>) => {
   const qs = params ? "?" + new URLSearchParams(params).toString() : "";
   return apiFetch<PagedResult<AuditLog>>(`${ADMIN}/audit-logs${qs}`);
 };
+
+// Number sequences
+export const getNumberSequences = (params?: Record<string, string>) => {
+  const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+  return apiFetch<PagedResult<NumberSequence>>(`${ADMIN}/number-sequences${qs}`);
+};
+
+export const getNumberSequenceById = (id: number) =>
+  apiFetch<NumberSequence>(`${ADMIN}/number-sequences/${id}`);
+
+export const getNumberSequencePreview = (id: number) =>
+  apiFetch<{ preview: string }>(`${ADMIN}/number-sequences/${id}/preview`);
+
+export const createNumberSequence = (data: CreateNumberSequenceRequest) =>
+  apiFetch<NumberSequence>(`${ADMIN}/number-sequences`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const updateNumberSequence = (id: number, data: UpdateNumberSequenceRequest) =>
+  apiFetch<NumberSequence>(`${ADMIN}/number-sequences/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const deleteNumberSequence = (id: number) =>
+  apiFetch<void>(`${ADMIN}/number-sequences/${id}`, { method: "DELETE" });
+
+export const activateNumberSequence = (id: number) =>
+  apiFetch<{ message: string }>(`${ADMIN}/number-sequences/${id}/activate`, { method: "POST" });
+
+export const deactivateNumberSequence = (id: number) =>
+  apiFetch<{ message: string }>(`${ADMIN}/number-sequences/${id}/deactivate`, { method: "POST" });

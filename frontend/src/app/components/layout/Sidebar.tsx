@@ -36,6 +36,7 @@ const navItems = [
       { label: "Roles", href: "/admin/roles" },
       { label: "Organization", href: "/admin/organization" },
       { label: "Audit Log", href: "/admin/audit-log" },
+      { label: "Number Sequences", href: "/admin/number-sequences" },
     ],
   },
   {
@@ -58,6 +59,10 @@ const navItems = [
     submenu: [
       { label: "Tax Codes", href: "/finance/tax-codes" },
       { label: "Chart of Accounts", href: "/finance/accounts" },
+      { label: "Journal Entries", href: "/finance/journal-entries" },
+      { label: "Financial Periods", href: "/finance/financial-periods" },
+      { label: "Trial Balance", href: "/finance/trial-balance" },
+      { label: "Ledger Inquiry", href: "/finance/ledger" },
     ],
   },
   {
