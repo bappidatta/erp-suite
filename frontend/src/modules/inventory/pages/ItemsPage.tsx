@@ -21,6 +21,8 @@ const STATUS_OPTIONS = [
   { value: "false", label: "Inactive" },
 ];
 
+const NONE_OPTION_VALUE = "__none__";
+
 const ITEM_TYPE_OPTIONS = [
   { value: "1", label: "Product" },
   { value: "2", label: "Service" },
@@ -128,10 +130,10 @@ function ItemForm({
           </Select>
         </FormField>
         <FormField id="categoryId" label="Category">
-          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v === "__none__" ? "" : (v ?? ""))}>
+          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v === NONE_OPTION_VALUE ? "" : (v ?? ""))}>
             <SelectTrigger id="categoryId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">None</SelectItem>
+              <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
               ))}
@@ -202,8 +204,8 @@ export function ItemsPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getUoms({ pageSize: "500" }).then((r) => setUoms(r.items)).catch(() => {});
-    getCategories({ pageSize: "500" }).then((r) => setCategories(r.items)).catch(() => {});
+    getUoms({ pageSize: "500" }).then((r) => setUoms(r.items)).catch((err) => console.warn("Failed to load UOMs:", err));
+    getCategories({ pageSize: "500" }).then((r) => setCategories(r.items)).catch((err) => console.warn("Failed to load categories:", err));
   }, []);
 
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {

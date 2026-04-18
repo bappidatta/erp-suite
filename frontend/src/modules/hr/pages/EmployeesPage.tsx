@@ -23,6 +23,8 @@ const STATUS_OPTIONS_FILTER = [
   { value: "4", label: "Resigned" },
 ];
 
+const NONE_OPTION_VALUE = "__none__";
+
 const STATUS_OPTIONS = [
   { value: "1", label: "Active" },
   { value: "2", label: "On Leave" },
@@ -126,10 +128,10 @@ function EmployeeForm({
 
       <FormGrid>
         <FormField id="departmentId" label="Department">
-          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v === "__none__" ? "" : (v ?? ""))}>
+          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v === NONE_OPTION_VALUE ? "" : (v ?? ""))}>
             <SelectTrigger id="departmentId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">None</SelectItem>
+              <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
               ))}
@@ -195,7 +197,7 @@ export function EmployeesPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getDepartments({ pageSize: "500" }).then((r) => setDepartments(r.items)).catch(() => {});
+    getDepartments({ pageSize: "500" }).then((r) => setDepartments(r.items)).catch((err) => console.warn("Failed to load departments:", err));
   }, []);
 
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
