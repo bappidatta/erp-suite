@@ -12,8 +12,8 @@ import {
   PageLayout, DataTable, FormField, FormGrid, FormActions,
   ColumnFilterInput, ColumnFilterSelect,
 } from "@shared/components";
-import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from "../api/hrApi";
-import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, PagedResult } from "../types";
+import { getEmployees, createEmployee, updateEmployee, deleteEmployee, getDepartments } from "../api/hrApi";
+import type { Employee, CreateEmployeeRequest, UpdateEmployeeRequest, PagedResult, Department } from "../types";
 
 const STATUS_OPTIONS_FILTER = [
   { value: "", label: "All" },
@@ -22,6 +22,8 @@ const STATUS_OPTIONS_FILTER = [
   { value: "3", label: "Terminated" },
   { value: "4", label: "Resigned" },
 ];
+
+const NONE_OPTION_VALUE = "__none__";
 
 const STATUS_OPTIONS = [
   { value: "1", label: "Active" },
@@ -39,10 +41,12 @@ const TYPE_OPTIONS = [
 
 function EmployeeForm({
   employee,
+  departments,
   onSave,
   onCancel,
 }: {
   employee?: Employee;
+  departments: Department[];
   onSave: (data: CreateEmployeeRequest | UpdateEmployeeRequest) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -52,6 +56,7 @@ function EmployeeForm({
     lastName: employee?.lastName ?? "",
     email: employee?.email ?? "",
     phone: employee?.phone ?? "",
+    departmentId: employee?.departmentId?.toString() ?? NONE_OPTION_VALUE,
     designation: employee?.designation ?? "",
     status: employee?.status?.toString() ?? "1",
     employmentType: employee?.employmentType?.toString() ?? "1",
@@ -74,6 +79,7 @@ function EmployeeForm({
         lastName: form.lastName,
         email: form.email || undefined,
         phone: form.phone || undefined,
+        departmentId: form.departmentId !== NONE_OPTION_VALUE ? Number(form.departmentId) : undefined,
         designation: form.designation || undefined,
         status: Number(form.status),
         employmentType: Number(form.employmentType),
@@ -120,9 +126,22 @@ function EmployeeForm({
         </FormField>
       </FormGrid>
 
-      <FormField id="designation" label="Designation">
-        <Input id="designation" value={form.designation} onChange={(e) => set("designation", e.target.value)} />
-      </FormField>
+      <FormGrid>
+        <FormField id="departmentId" label="Department">
+          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v)}>
+            <SelectTrigger id="departmentId"><SelectValue placeholder="None" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
+              {departments.map((d) => (
+                <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField id="designation" label="Designation">
+          <Input id="designation" value={form.designation} onChange={(e) => set("designation", e.target.value)} />
+        </FormField>
+      </FormGrid>
 
       <FormGrid>
         <FormField id="status" label="Status">
@@ -167,6 +186,7 @@ function EmployeeForm({
 
 export function EmployeesPage() {
   const [result, setResult] = useState<PagedResult<Employee> | null>(null);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -175,6 +195,10 @@ export function EmployeesPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    getDepartments({ pageSize: "500" }).then((r) => setDepartments(r.items)).catch((err) => console.warn("Failed to load departments:", err));
+  }, []);
 
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     setSorting((current) => {
@@ -325,7 +349,7 @@ export function EmployeesPage() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>{editingEmployee ? "Edit Employee" : "Create Employee"}</DialogTitle></DialogHeader>
-          <EmployeeForm employee={editingEmployee} onSave={handleSave} onCancel={() => { setFormOpen(false); setEditingEmployee(undefined); }} />
+          <EmployeeForm employee={editingEmployee} departments={departments} onSave={handleSave} onCancel={() => { setFormOpen(false); setEditingEmployee(undefined); }} />
         </DialogContent>
       </Dialog>
 

@@ -12,14 +12,16 @@ import {
   PageLayout, DataTable, FormField, FormGrid, FormActions, StatusBadge,
   ColumnFilterInput, ColumnFilterSelect,
 } from "@shared/components";
-import { getItems, createItem, updateItem, deleteItem, activateItem, deactivateItem } from "../api/inventoryApi";
-import type { Item, CreateItemRequest, UpdateItemRequest, PagedResult } from "../types";
+import { getItems, createItem, updateItem, deleteItem, activateItem, deactivateItem, getUoms, getCategories } from "../api/inventoryApi";
+import type { Item, CreateItemRequest, UpdateItemRequest, PagedResult, UnitOfMeasure, Category } from "../types";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All" },
   { value: "true", label: "Active" },
   { value: "false", label: "Inactive" },
 ];
+
+const NONE_OPTION_VALUE = "__none__";
 
 const ITEM_TYPE_OPTIONS = [
   { value: "1", label: "Product" },
@@ -39,10 +41,14 @@ const getItemTypeName = (type: number) =>
 
 function ItemForm({
   item,
+  uoms,
+  categories,
   onSave,
   onCancel,
 }: {
   item?: Item;
+  uoms: UnitOfMeasure[];
+  categories: Category[];
   onSave: (data: CreateItemRequest | UpdateItemRequest) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -51,6 +57,7 @@ function ItemForm({
     name: item?.name ?? "",
     description: item?.description ?? "",
     uomId: item?.uomId?.toString() ?? "",
+    categoryId: item?.categoryId?.toString() ?? NONE_OPTION_VALUE,
     type: item?.type?.toString() ?? "1",
     valuationMethod: item?.valuationMethod?.toString() ?? "1",
     standardCost: item?.standardCost?.toString() ?? "0",
@@ -73,6 +80,7 @@ function ItemForm({
         name: form.name,
         description: form.description || undefined,
         uomId: Number(form.uomId),
+        categoryId: form.categoryId !== NONE_OPTION_VALUE ? Number(form.categoryId) : undefined,
         type: Number(form.type),
         valuationMethod: Number(form.valuationMethod),
         standardCost: Number(form.standardCost) || 0,
@@ -110,9 +118,29 @@ function ItemForm({
         <Input id="description" value={form.description} onChange={(e) => set("description", e.target.value)} />
       </FormField>
 
-      <FormField id="uomId" label="Unit of Measure ID">
-        <Input id="uomId" required type="number" min={1} value={form.uomId} onChange={(e) => set("uomId", e.target.value)} />
-      </FormField>
+      <FormGrid>
+        <FormField id="uomId" label="Unit of Measure">
+          <Select value={form.uomId} onValueChange={(v) => set("uomId", v)}>
+            <SelectTrigger id="uomId"><SelectValue placeholder="Select UOM" /></SelectTrigger>
+            <SelectContent>
+              {uoms.map((u) => (
+                <SelectItem key={u.id} value={u.id.toString()}>{u.name} ({u.code})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField id="categoryId" label="Category">
+          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
+            <SelectTrigger id="categoryId"><SelectValue placeholder="None" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+      </FormGrid>
 
       <FormGrid>
         <FormField id="type" label="Item Type">
@@ -157,13 +185,15 @@ function ItemForm({
         <Input id="notes" value={form.notes} onChange={(e) => set("notes", e.target.value)} />
       </FormField>
 
-      <FormActions onCancel={onCancel} saving={saving} saveLabel={item ? "Update Item" : "Create Item"} />
+      <FormActions onCancel={onCancel} saving={saving} disabled={!form.uomId} saveLabel={item ? "Update Item" : "Create Item"} />
     </form>
   );
 }
 
 export function ItemsPage() {
   const [result, setResult] = useState<PagedResult<Item> | null>(null);
+  const [uoms, setUoms] = useState<UnitOfMeasure[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -172,6 +202,11 @@ export function ItemsPage() {
   const [editingItem, setEditingItem] = useState<Item | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Item | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    getUoms({ pageSize: "500" }).then((r) => setUoms(r.items)).catch((err) => console.warn("Failed to load UOMs:", err));
+    getCategories({ pageSize: "500" }).then((r) => setCategories(r.items)).catch((err) => console.warn("Failed to load categories:", err));
+  }, []);
 
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     setSorting((current) => {
@@ -330,7 +365,7 @@ export function ItemsPage() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>{editingItem ? "Edit Item" : "Create Item"}</DialogTitle></DialogHeader>
-          <ItemForm item={editingItem} onSave={handleSave} onCancel={() => { setFormOpen(false); setEditingItem(undefined); }} />
+          <ItemForm item={editingItem} uoms={uoms} categories={categories} onSave={handleSave} onCancel={() => { setFormOpen(false); setEditingItem(undefined); }} />
         </DialogContent>
       </Dialog>
 
