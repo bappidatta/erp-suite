@@ -134,3 +134,48 @@ export interface UpdateOrganizationSettingsRequest {
   dateFormat?: string;
   timeZone?: string;
 }
+
+export interface NumberSequence {
+  id: number;
+  module: string;
+  documentType: string;
+  prefix: string;
+  suffix?: string;
+  startingNumber: number;
+  nextNumber: number;
+  paddingLength: number;
+  incrementBy: number;
+  resetPolicy: number;
+  resetPolicyName: string;
+  isActive: boolean;
+  preview: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+}
+
+export interface CreateNumberSequenceRequest {
+  module: string;
+  documentType: string;
+  prefix: string;
+  suffix?: string;
+  startingNumber?: number;
+  nextNumber?: number;
+  paddingLength?: number;
+  incrementBy?: number;
+  resetPolicy?: number;
+  isActive?: boolean;
+}
+
+export interface UpdateNumberSequenceRequest {
+  module: string;
+  documentType: string;
+  prefix: string;
+  suffix?: string;
+  startingNumber: number;
+  nextNumber: number;
+  paddingLength: number;
+  incrementBy: number;
+  resetPolicy?: number;
+  isActive?: boolean;
+}

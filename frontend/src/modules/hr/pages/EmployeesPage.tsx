@@ -128,7 +128,7 @@ function EmployeeForm({
 
       <FormGrid>
         <FormField id="departmentId" label="Department">
-          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v)}>
+          <Select value={form.departmentId} onValueChange={(v) => set("departmentId", v ?? "")}>
             <SelectTrigger id="departmentId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>

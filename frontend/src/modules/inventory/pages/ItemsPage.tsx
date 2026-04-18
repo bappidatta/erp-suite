@@ -120,7 +120,7 @@ function ItemForm({
 
       <FormGrid>
         <FormField id="uomId" label="Unit of Measure">
-          <Select value={form.uomId} onValueChange={(v) => set("uomId", v)}>
+          <Select value={form.uomId} onValueChange={(v) => set("uomId", v ?? "")}>
             <SelectTrigger id="uomId"><SelectValue placeholder="Select UOM" /></SelectTrigger>
             <SelectContent>
               {uoms.map((u) => (
@@ -130,7 +130,7 @@ function ItemForm({
           </Select>
         </FormField>
         <FormField id="categoryId" label="Category">
-          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
+          <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v ?? "")}>
             <SelectTrigger id="categoryId"><SelectValue placeholder="None" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE_OPTION_VALUE}>None</SelectItem>

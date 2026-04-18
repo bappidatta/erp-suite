@@ -88,3 +88,100 @@ export interface PagedResult<T> {
   hasPreviousPage: boolean;
   hasNextPage: boolean;
 }
+
+export interface JournalEntryLine {
+  id: number;
+  lineNumber: number;
+  accountId: number;
+  accountCode: string;
+  accountName: string;
+  debitAmount: number;
+  creditAmount: number;
+  description?: string;
+}
+
+export interface JournalEntry {
+  id: number;
+  number: string;
+  entryDate: string;
+  description: string;
+  reference?: string;
+  status: number;
+  statusName: string;
+  postedAt?: string;
+  postedBy?: string;
+  totalDebit: number;
+  totalCredit: number;
+  lines: JournalEntryLine[];
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+}
+
+export interface JournalEntryLineRequest {
+  lineNumber: number;
+  accountId: number;
+  debitAmount: number;
+  creditAmount: number;
+  description?: string;
+}
+
+export interface CreateJournalEntryRequest {
+  entryDate: string;
+  description: string;
+  reference?: string;
+  lines: JournalEntryLineRequest[];
+}
+
+export interface UpdateJournalEntryRequest {
+  entryDate: string;
+  description: string;
+  reference?: string;
+  lines: JournalEntryLineRequest[];
+}
+
+export interface FinancialPeriod {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status: number;
+  statusName: string;
+  closedAt?: string;
+  closedBy?: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+}
+
+export interface CreateFinancialPeriodRequest {
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface UpdateFinancialPeriodRequest {
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface TrialBalanceRow {
+  accountId: number;
+  accountCode: string;
+  accountName: string;
+  totalDebit: number;
+  totalCredit: number;
+  netBalance: number;
+}
+
+export interface LedgerEntry {
+  journalEntryId: number;
+  journalNumber: string;
+  entryDate: string;
+  description: string;
+  reference?: string;
+  debitAmount: number;
+  creditAmount: number;
+  runningBalance: number;
+}
